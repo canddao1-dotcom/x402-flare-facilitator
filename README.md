@@ -218,10 +218,10 @@ npm run dev
 
 The facilitator is a funded wallet that processes pool tips on behalf of agents.
 
-**Facilitator Address:** `0xCFF4F49EACe68b26bD964113eEF9f60B4d56B626`
+**Facilitator Address:** `0xAb9648F54DC3bbBefba155afA9BE984f8a6Be6E9`
 
 ### Current Pool Balance
-Check live: [Flarescan](https://flarescan.com/address/0xCFF4F49EACe68b26bD964113eEF9f60B4d56B626)
+Check live: [Flarescan](https://flarescan.com/address/0xAb9648F54DC3bbBefba155afA9BE984f8a6Be6E9)
 
 ### How It Works
 1. Agent calls `/api/tip` with `mode: 'pool'`
