@@ -79,5 +79,17 @@ if [ -z "$AGENT_NAME" ]; then
     exit 1
 fi
 
-# Run bootstrap
-node scripts/bootstrap.js new --name "$AGENT_NAME"
+# Check for --wizard flag
+if [ "$2" = "--wizard" ] || [ "$1" = "--wizard" ]; then
+    echo ""
+    echo "🧙 Starting Setup Wizard..."
+    echo ""
+    node scripts/wizard.js
+else
+    # Run basic bootstrap
+    node scripts/bootstrap.js new --name "$AGENT_NAME"
+    
+    echo ""
+    echo "💡 Want full setup with API keys & tipping?"
+    echo "   Run: node scripts/wizard.js"
+fi
