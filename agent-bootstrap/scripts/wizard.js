@@ -595,10 +595,43 @@ async function installAndStartAgent(config) {
   
   console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Starting Your Agent')} ${c('cyan', '━━━')}\n`);
   
+  // Fix PATH for Homebrew node@22 if needed (macOS)
+  let envPath = process.env.PATH || '';
+  const homebrewNodePaths = [
+    '/opt/homebrew/opt/node@22/bin',
+    '/opt/homebrew/opt/node/bin',
+    '/usr/local/opt/node@22/bin',
+    '/usr/local/opt/node/bin'
+  ];
+  
+  for (const nodePath of homebrewNodePaths) {
+    if (fs.existsSync(nodePath) && !envPath.includes(nodePath)) {
+      console.log(c('dim', `Adding ${nodePath} to PATH...`));
+      envPath = `${nodePath}:${envPath}`;
+      process.env.PATH = envPath;
+    }
+  }
+  
+  // Also add common npm global paths
+  const homeDir = process.env.HOME || '';
+  const npmPaths = [
+    `${homeDir}/.npm-global/bin`,
+    `${homeDir}/.local/bin`,
+    '/opt/homebrew/bin',
+    '/usr/local/bin'
+  ];
+  
+  for (const npmPath of npmPaths) {
+    if (fs.existsSync(npmPath) && !envPath.includes(npmPath)) {
+      envPath = `${npmPath}:${envPath}`;
+      process.env.PATH = envPath;
+    }
+  }
+  
   // Step 1: Check if openclaw is installed
   let openclawInstalled = false;
   try {
-    execSync('openclaw --version', { stdio: 'pipe' });
+    execSync('openclaw --version', { stdio: 'pipe', env: process.env });
     openclawInstalled = true;
     console.log(c('green', '✅ OpenClaw already installed'));
   } catch (e) {
@@ -606,10 +639,31 @@ async function installAndStartAgent(config) {
     try {
       execSync('curl -fsSL https://openclaw.ai/install.sh | bash', { 
         stdio: 'inherit',
-        shell: true 
+        shell: true,
+        env: process.env
       });
       openclawInstalled = true;
       console.log(c('green', '\n✅ OpenClaw installed'));
+      
+      // After install, check again with updated PATH
+      try {
+        execSync('openclaw --version', { stdio: 'pipe', env: process.env });
+      } catch (e2) {
+        // Try to find where openclaw was installed
+        const possiblePaths = [
+          `${homeDir}/.openclaw/bin`,
+          `${homeDir}/.local/bin`,
+          '/opt/homebrew/bin',
+          '/usr/local/bin'
+        ];
+        for (const p of possiblePaths) {
+          if (fs.existsSync(`${p}/openclaw`)) {
+            process.env.PATH = `${p}:${process.env.PATH}`;
+            console.log(c('dim', `Found openclaw in ${p}`));
+            break;
+          }
+        }
+      }
     } catch (e) {
       console.log(c('red', '\n❌ Failed to install OpenClaw'));
       console.log(c('dim', '   Try manually: curl -fsSL https://openclaw.ai/install.sh | bash'));
@@ -641,7 +695,8 @@ async function installAndStartAgent(config) {
       execSync('openclaw gateway start', {
         cwd: config.wallet.keystorePath,
         stdio: 'inherit',
-        timeout: 30000
+        timeout: 30000,
+        env: process.env
       });
     } catch (e) {
       // gateway start may exit after daemonizing, which throws - that's OK
@@ -656,7 +711,8 @@ async function installAndStartAgent(config) {
       const status = execSync('openclaw gateway status', { 
         cwd: config.wallet.keystorePath,
         encoding: 'utf8',
-        timeout: 10000
+        timeout: 10000,
+        env: process.env
       });
       
       if (status.toLowerCase().includes('running') || 
