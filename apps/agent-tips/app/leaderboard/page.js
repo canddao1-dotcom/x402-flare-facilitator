@@ -15,23 +15,6 @@ export default function Leaderboard() {
       // The report endpoint has persistent byAgent stats that survive deploys
       const reportByAgent = reportData.byAgent || {};
       
-      // Merge topRecipients with persistent stats from report
-      const mergedTopRecipients = (apiData.stats?.topRecipients || []).map(agent => {
-        // Try to find this agent in the persistent report data
-        const persistentStats = reportByAgent[agent.agent];
-        
-        if (persistentStats) {
-          return {
-            ...agent,
-            tipsSent: (agent.tipsSent || 0) + (persistentStats.sent || 0),
-            tipsReceived: (agent.tipsReceived || 0) + (persistentStats.received || 0),
-            amountSent: ((parseFloat(agent.amountSent) || 0) + (persistentStats.sentAmount || 0)).toFixed(2),
-            amountReceived: ((parseFloat(agent.amountReceived) || 0) + (persistentStats.receivedAmount || 0)).toFixed(2)
-          };
-        }
-        return agent;
-      });
-      
       // Token prices for USD calculation (updated 2026-01-31 from FTSO)
       const TOKEN_PRICES = {
         'USDT': 1.0, 'USDC': 1.0,
@@ -48,6 +31,35 @@ export default function Leaderboard() {
           return sum + (amount * price);
         }, 0);
       };
+      
+      // Merge topRecipients with persistent stats from report
+      const mergedTopRecipients = (apiData.stats?.topRecipients || []).map(agent => {
+        // Try to find this agent in the persistent report data
+        const persistentStats = reportByAgent[agent.agent];
+        
+        if (persistentStats) {
+          // Calculate total USD from byToken
+          const totalUSD = calcUSD(persistentStats.byToken);
+          const totalRaw = (persistentStats.sentAmount || 0) + (persistentStats.receivedAmount || 0);
+          
+          // Distribute USD proportionally between sent and received
+          let sentUSD = 0, recvUSD = 0;
+          if (totalRaw > 0) {
+            const ratio = totalUSD / totalRaw;
+            sentUSD = (persistentStats.sentAmount || 0) * ratio;
+            recvUSD = (persistentStats.receivedAmount || 0) * ratio;
+          }
+          
+          return {
+            ...agent,
+            tipsSent: (agent.tipsSent || 0) + (persistentStats.sent || 0),
+            tipsReceived: (agent.tipsReceived || 0) + (persistentStats.received || 0),
+            amountSent: ((parseFloat(agent.amountSent) || 0) + sentUSD).toFixed(2),
+            amountReceived: ((parseFloat(agent.amountReceived) || 0) + recvUSD).toFixed(2)
+          };
+        }
+        return agent;
+      });
       
       // Add human wallets that have sent tips (not in whitelist)
       const existingAgentKeys = new Set(mergedTopRecipients.map(a => a.agent));
