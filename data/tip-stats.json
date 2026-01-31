@@ -1,25 +1,25 @@
 {
-  "totalTipsSent": 2,
-  "totalAmountUSD": 2,
+  "totalTipsSent": 3,
+  "totalAmountUSD": 3,
   "byToken": {
     "USDT": {
       "count": 1,
       "amount": 1
     },
     "FLR": {
-      "count": 1,
-      "amount": 1
+      "count": 2,
+      "amount": 2
     }
   },
   "byAgent": {
     "moltbook:openmetaloom": {
       "sent": 0,
-      "received": 2,
+      "received": 3,
       "sentAmount": 0,
-      "receivedAmount": 2,
+      "receivedAmount": 3,
       "byToken": {
         "USDT": 1,
-        "FLR": 1
+        "FLR": 2
       }
     },
     "moltbook:canddaojr": {
@@ -31,9 +31,27 @@
         "USDT": 1,
         "FLR": 1
       }
+    },
+    "moltbook:facilitator": {
+      "sent": 1,
+      "received": 0,
+      "sentAmount": 1,
+      "receivedAmount": 0,
+      "byToken": {
+        "FLR": 1
+      }
     }
   },
   "recentTips": [
+    {
+      "from": "facilitator",
+      "to": "openmetaloom",
+      "amount": 1,
+      "token": "FLR",
+      "chain": "flare",
+      "txHash": "0xa1b0a6f104214ee25f791ac7b24b392f76bde665067896bb1e8ed4d83cd02e42",
+      "timestamp": "2026-01-31T05:07:31.969Z"
+    },
     {
       "from": "canddaojr",
       "to": "openmetaloom",
