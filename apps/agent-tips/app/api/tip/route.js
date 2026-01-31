@@ -9,8 +9,77 @@ function getFacilitatorKey() {
 // Pool tip limits
 const POOL_LIMITS = {
   maxTipUSD: 1.00, // Max 1 USDT equivalent per tip
-  maxDailyTips: 10, // Max tips per agent per day
+  maxDailyTipsPerAgent: 10, // Max tips per agent per day
+  cooldownMinutes: 5, // Minutes between tips from same agent
+  maxDailyPoolUSD: 50, // Max total pool tips per day
 };
+
+// In-memory rate limit tracking (resets on deploy - use Redis/KV in production)
+const rateLimitState = {
+  agentTips: {}, // { 'agent': { count: 0, lastTip: timestamp, date: 'YYYY-MM-DD' } }
+  dailyPoolTotal: { amount: 0, date: '' }
+};
+
+function getTodayDate() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function checkRateLimits(senderAgent) {
+  const today = getTodayDate();
+  const now = Date.now();
+  
+  // Reset daily counters if new day
+  if (rateLimitState.dailyPoolTotal.date !== today) {
+    rateLimitState.dailyPoolTotal = { amount: 0, date: today };
+    // Reset all agent counters for new day
+    Object.keys(rateLimitState.agentTips).forEach(agent => {
+      if (rateLimitState.agentTips[agent].date !== today) {
+        rateLimitState.agentTips[agent] = { count: 0, lastTip: 0, date: today };
+      }
+    });
+  }
+  
+  // Initialize agent if not tracked
+  if (!rateLimitState.agentTips[senderAgent]) {
+    rateLimitState.agentTips[senderAgent] = { count: 0, lastTip: 0, date: today };
+  }
+  
+  const agentState = rateLimitState.agentTips[senderAgent];
+  
+  // Check daily pool cap
+  if (rateLimitState.dailyPoolTotal.amount >= POOL_LIMITS.maxDailyPoolUSD) {
+    return { allowed: false, reason: `Daily pool limit reached (${POOL_LIMITS.maxDailyPoolUSD} USDT). Try again tomorrow.` };
+  }
+  
+  // Check agent daily limit
+  if (agentState.count >= POOL_LIMITS.maxDailyTipsPerAgent) {
+    return { allowed: false, reason: `Daily tip limit reached (${POOL_LIMITS.maxDailyTipsPerAgent} tips). Try again tomorrow.` };
+  }
+  
+  // Check cooldown
+  const cooldownMs = POOL_LIMITS.cooldownMinutes * 60 * 1000;
+  if (agentState.lastTip && (now - agentState.lastTip) < cooldownMs) {
+    const waitMinutes = Math.ceil((cooldownMs - (now - agentState.lastTip)) / 60000);
+    return { allowed: false, reason: `Cooldown active. Wait ${waitMinutes} more minute(s).` };
+  }
+  
+  return { allowed: true };
+}
+
+function recordTip(senderAgent, amount) {
+  const today = getTodayDate();
+  
+  if (!rateLimitState.agentTips[senderAgent]) {
+    rateLimitState.agentTips[senderAgent] = { count: 0, lastTip: 0, date: today };
+  }
+  
+  rateLimitState.agentTips[senderAgent].count++;
+  rateLimitState.agentTips[senderAgent].lastTip = Date.now();
+  rateLimitState.agentTips[senderAgent].date = today;
+  
+  rateLimitState.dailyPoolTotal.amount += parseFloat(amount);
+  rateLimitState.dailyPoolTotal.date = today;
+}
 
 // Whitelisted agents who can use pool-funded tips (send AND receive)
 // Register at: https://github.com/canddao1-dotcom/x402-flare-facilitator
@@ -103,6 +172,21 @@ export async function POST(request) {
           limit: POOL_LIMITS.maxTipUSD
         }, { status: 400 })
       }
+      
+      // Check rate limits (daily cap, per-agent limit, cooldown)
+      const rateCheck = checkRateLimits(senderAgent);
+      if (!rateCheck.allowed) {
+        return NextResponse.json({
+          error: 'Rate limit exceeded',
+          message: rateCheck.reason,
+          limits: {
+            maxTipUSD: POOL_LIMITS.maxTipUSD,
+            maxDailyTipsPerAgent: POOL_LIMITS.maxDailyTipsPerAgent,
+            cooldownMinutes: POOL_LIMITS.cooldownMinutes,
+            maxDailyPoolUSD: POOL_LIMITS.maxDailyPoolUSD
+          }
+        }, { status: 429 })
+      }
     }
 
     // Resolve agent wallet
@@ -134,6 +218,11 @@ export async function POST(request) {
       privateKey: privateKey
     });
 
+    // Record tip for rate limiting (pool mode only)
+    if (mode === 'pool' && senderAgent) {
+      recordTip(senderAgent, amount);
+    }
+
     // Log the tip
     saveTip({
       platform,
@@ -143,7 +232,9 @@ export async function POST(request) {
       token: token,
       chain: chain,
       txHash: result.txHash,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      mode: mode,
+      senderAgent: senderAgent || null
     });
 
     console.log(`💰 [Agent Tips] ${result.amount} ${token} (fee: ${result.fee}) on ${chain} → ${username} (${recipientWallet}) tx: ${result.txHash}`);

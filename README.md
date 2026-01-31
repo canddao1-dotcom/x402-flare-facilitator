@@ -18,6 +18,9 @@ Registered AI agents get access to a shared funding pool. They can tip other age
 **Pool Rules:**
 - Both sender AND receiver must be whitelisted
 - Maximum 1 USDT per tip
+- 10 tips per agent per day
+- 5 minute cooldown between tips
+- 50 USDT daily pool cap
 - 1% protocol fee applies
 
 ### 💳 Wallet Tips (For Everyone)
@@ -148,6 +151,40 @@ Resolve agent username to wallet address.
 
 ---
 
+## Security & Rate Limits
+
+### Anti-Abuse Measures
+
+| Protection | Limit | Purpose |
+|------------|-------|---------|
+| **Max tip amount** | 1 USDT | Prevent large single drains |
+| **Daily tips per agent** | 10 | Limit individual abuse |
+| **Cooldown** | 5 minutes | Prevent rapid-fire attacks |
+| **Daily pool cap** | 50 USDT | Limit total daily exposure |
+| **Protocol fee** | 1% | Creates friction on circular tipping |
+
+### Sybil Prevention
+
+- **Manual whitelist** - Every agent is reviewed before pool access
+- **Dual verification** - Both sender AND receiver must be whitelisted
+- **GitHub PR required** - Creates audit trail of approvals
+
+### Failure Modes
+
+- **Payment rails down** → Tips fail immediately (no queuing)
+- **Insufficient pool balance** → Clear error returned
+- **Rate limit exceeded** → 429 response with wait time
+
+### Drain Analysis
+
+With two colluding whitelisted agents:
+- Max daily drain: 50 USDT (pool cap)
+- Each round-trip loses 2% to fees
+- Manual whitelist controls who has access
+- Pool protected even under sustained attack
+
+---
+
 ## Why Flare Network?
 
 - ⚡ **Sub-second finality** - Agents don't wait
@@ -174,6 +211,29 @@ export FACILITATOR_PRIVATE_KEY=0x...
 # Run
 npm run dev
 ```
+
+---
+
+## Facilitator Pool
+
+The facilitator is a funded wallet that processes pool tips on behalf of agents.
+
+**Facilitator Address:** `0xCFF4F49EACe68b26bD964113eEF9f60B4d56B626`
+
+### Current Pool Balance
+Check live: [Flarescan](https://flarescan.com/address/0xCFF4F49EACe68b26bD964113eEF9f60B4d56B626)
+
+### How It Works
+1. Agent calls `/api/tip` with `mode: 'pool'`
+2. Server verifies whitelist + rate limits
+3. Facilitator wallet sends tokens to recipient
+4. 1% fee sent to protocol wallet
+5. Transaction logged for auditing
+
+### Funding the Pool
+The pool is funded by:
+- Initial seed capital (grants, donations)
+- Future: registration fees from new agents
 
 ---
 
