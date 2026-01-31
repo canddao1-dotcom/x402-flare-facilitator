@@ -1,15 +1,11 @@
 #!/usr/bin/env node
 /**
- * Agent Setup Wizard
+ * Agent Setup Wizard v2
  * 
- * Interactive setup that guides users through:
- * 1. LLM API key (Anthropic/OpenAI)
- * 2. Wallet setup (uses existing bootstrap or creates new)
- * 3. Agent identity & description
- * 4. x402 tipping registration
- * 5. Optional: Telegram/Discord channels
- * 
- * Outputs a complete .env ready to run OpenClaw.
+ * Interactive setup with:
+ * - Back navigation (type 'back' at any prompt)
+ * - Summary confirmation before saving
+ * - Tip request flow for onboarding
  */
 
 import readline from 'readline';
@@ -46,20 +42,29 @@ function createRL() {
   });
 }
 
-async function ask(question, defaultVal = '') {
+// Navigation control
+const BACK = Symbol('BACK');
+
+async function ask(question, defaultVal = '', allowBack = true) {
   return new Promise((resolve) => {
+    const backHint = allowBack ? c('dim', ' (type "back" to go back)') : '';
     const suffix = defaultVal ? c('dim', ` [${defaultVal}]`) : '';
-    rl.question(`${question}${suffix}: `, (answer) => {
-      resolve(answer.trim() || defaultVal);
+    rl.question(`${question}${suffix}${backHint}: `, (answer) => {
+      const trimmed = answer.trim();
+      if (allowBack && trimmed.toLowerCase() === 'back') {
+        resolve(BACK);
+      } else {
+        resolve(trimmed || defaultVal);
+      }
     });
   });
 }
 
-async function askSecret(question) {
+async function askSecret(question, allowBack = true) {
   return new Promise((resolve) => {
-    process.stdout.write(`${question}: `);
+    const backHint = allowBack ? c('dim', ' (or "back")') : '';
+    process.stdout.write(`${question}${backHint}: `);
     
-    // Hide input
     if (process.stdin.isTTY) {
       process.stdin.setRawMode(true);
     }
@@ -74,12 +79,14 @@ async function askSecret(question) {
         }
         process.stdin.removeListener('data', onData);
         process.stdout.write('\n');
-        resolve(input);
+        if (allowBack && input.toLowerCase() === 'back') {
+          resolve(BACK);
+        } else {
+          resolve(input);
+        }
       } else if (char === '\u0003') {
-        // Ctrl+C
         process.exit();
       } else if (char === '\u007F') {
-        // Backspace
         input = input.slice(0, -1);
       } else {
         input += char;
@@ -92,22 +99,28 @@ async function askSecret(question) {
   });
 }
 
-async function askYesNo(question, defaultYes = true) {
+async function askYesNo(question, defaultYes = true, allowBack = true) {
   const suffix = defaultYes ? '[Y/n]' : '[y/N]';
-  const answer = await ask(`${question} ${c('dim', suffix)}`);
+  const answer = await ask(`${question} ${c('dim', suffix)}`, '', allowBack);
+  if (answer === BACK) return BACK;
   if (!answer) return defaultYes;
   return answer.toLowerCase().startsWith('y');
 }
 
-async function askChoice(question, choices) {
+async function askChoice(question, choices, allowBack = true) {
   console.log(`\n${question}`);
   choices.forEach((choice, i) => {
     console.log(`  ${c('cyan', i + 1)}) ${choice.label}`);
   });
+  if (allowBack) {
+    console.log(`  ${c('dim', '0) Go back')}`);
+  }
   
-  const answer = await ask(`\nChoice (1-${choices.length})`);
+  const answer = await ask(`\nChoice (1-${choices.length})`, '', false);
+  
+  if (answer === '0' && allowBack) return BACK;
+  
   const idx = parseInt(answer) - 1;
-  
   if (idx >= 0 && idx < choices.length) {
     return choices[idx].value;
   }
@@ -124,382 +137,501 @@ This wizard will help you set up a new AI agent with:
   • Multi-chain wallets (Flare, Base, HyperEVM, Solana)
   • LLM API connection (Anthropic or OpenAI)
   • x402 tipping integration
-  • Optional messaging channels (Telegram, Discord)
+  • Optional messaging channels
 
-${c('dim', 'Press Ctrl+C at any time to exit.')}
+${c('dim', 'Type "back" at any prompt to go to the previous step.')}
+${c('dim', 'Press Ctrl+C to exit.')}
 `);
 }
 
-function printSection(title) {
-  console.log(`\n${c('magenta', '━━━')} ${c('bright', title)} ${c('magenta', '━━━')}\n`);
+function printSection(num, title) {
+  console.log(`\n${c('magenta', '━━━')} ${c('bright', `Step ${num}: ${title}`)} ${c('magenta', '━━━')}\n`);
 }
 
-// Generate wallet (simplified version)
-function generateWallet() {
-  const { generatePrivateKey, privateKeyToAccount } = require('viem/accounts');
-  const privateKey = generatePrivateKey();
-  const account = privateKeyToAccount(privateKey);
-  return {
-    address: account.address,
-    privateKey
-  };
-}
-
-// Main wizard
+// Wizard steps as array for navigation
 async function runWizard() {
   rl = createRL();
-  
   printBanner();
   
   const config = {
     agent: {},
     llm: {},
     wallet: {},
-    x402: {},
+    x402: { enabled: true },
     channels: {}
   };
   
-  // ═══════════════════════════════════════════════════════════════
-  // STEP 1: Agent Identity
-  // ═══════════════════════════════════════════════════════════════
-  printSection('Step 1: Agent Identity');
-  
-  config.agent.name = await ask(`${c('green', '?')} Agent name (e.g., "TradingBot", "MyAssistant")`);
-  
-  if (!config.agent.name) {
-    console.log(c('red', '\n❌ Agent name is required'));
-    process.exit(1);
-  }
-  
-  config.agent.description = await ask(
-    `${c('green', '?')} Brief description`,
-    'AI assistant powered by OpenClaw'
-  );
-  
-  // ═══════════════════════════════════════════════════════════════
-  // STEP 2: LLM Provider
-  // ═══════════════════════════════════════════════════════════════
-  printSection('Step 2: LLM Provider');
-  
-  config.llm.provider = await askChoice(
-    `${c('green', '?')} Choose your LLM provider:`,
-    [
-      { label: 'Anthropic (Claude) - Recommended', value: 'anthropic' },
-      { label: 'OpenAI (GPT-4)', value: 'openai' },
-      { label: 'OpenRouter (Multiple models)', value: 'openrouter' }
-    ]
-  );
-  
-  const apiKeyPrompts = {
-    anthropic: 'Anthropic API key (sk-ant-...)',
-    openai: 'OpenAI API key (sk-...)',
-    openrouter: 'OpenRouter API key (sk-or-...)'
-  };
-  
-  console.log(`\n${c('dim', 'Get your API key from:')}`)
-  if (config.llm.provider === 'anthropic') {
-    console.log(c('dim', '  https://console.anthropic.com/settings/keys'));
-  } else if (config.llm.provider === 'openai') {
-    console.log(c('dim', '  https://platform.openai.com/api-keys'));
-  } else {
-    console.log(c('dim', '  https://openrouter.ai/keys'));
-  }
-  
-  config.llm.apiKey = await askSecret(`\n${c('green', '?')} ${apiKeyPrompts[config.llm.provider]}`);
-  
-  if (!config.llm.apiKey) {
-    console.log(c('yellow', '\n⚠️  No API key provided - you\'ll need to add it later'));
-  }
-  
-  // Model selection
-  const defaultModels = {
-    anthropic: 'claude-sonnet-4-20250514',
-    openai: 'gpt-4o',
-    openrouter: 'anthropic/claude-sonnet-4'
-  };
-  
-  config.llm.model = await ask(
-    `${c('green', '?')} Model`,
-    defaultModels[config.llm.provider]
-  );
-  
-  // ═══════════════════════════════════════════════════════════════
-  // STEP 3: Wallet Setup
-  // ═══════════════════════════════════════════════════════════════
-  printSection('Step 3: Multi-Chain Wallet');
-  
-  // Check for existing bootstrap
-  const existingPath = path.join(DATA_DIR, config.agent.name);
-  let useExisting = false;
-  
-  if (fs.existsSync(existingPath)) {
-    console.log(c('yellow', `Found existing wallet for "${config.agent.name}"`));
-    useExisting = await askYesNo('Use existing wallet?', true);
-  }
-  
-  if (useExisting) {
-    const summary = JSON.parse(
-      fs.readFileSync(path.join(existingPath, 'wallet-summary.json'), 'utf8')
-    );
-    config.wallet = {
-      evmAddress: summary.wallets.evm.address,
-      solanaAddress: summary.wallets.solana.address,
-      keystorePath: existingPath
-    };
-    console.log(c('green', `\n✅ Using existing wallet: ${config.wallet.evmAddress}`));
-  } else {
-    console.log('\nGenerating new multi-chain wallet...');
-    
-    // Import and run bootstrap
-    const { execSync } = await import('child_process');
-    
-    try {
-      execSync(`node ${path.join(__dirname, 'bootstrap.js')} new --name "${config.agent.name}"`, {
-        stdio: 'inherit'
-      });
+  // Step functions
+  const steps = [
+    // Step 1: Agent Identity
+    async () => {
+      printSection(1, 'Agent Identity');
       
-      const summary = JSON.parse(
-        fs.readFileSync(path.join(DATA_DIR, config.agent.name, 'wallet-summary.json'), 'utf8')
+      const name = await ask(`${c('green', '?')} Agent name (e.g., "TradingBot")`);
+      if (name === BACK) return BACK;
+      if (!name) {
+        console.log(c('red', '   Agent name is required'));
+        return false; // Retry this step
+      }
+      config.agent.name = name;
+      
+      const desc = await ask(
+        `${c('green', '?')} Brief description`,
+        'AI assistant powered by OpenClaw'
       );
-      config.wallet = {
-        evmAddress: summary.wallets.evm.address,
-        solanaAddress: summary.wallets.solana.address,
-        keystorePath: path.join(DATA_DIR, config.agent.name)
+      if (desc === BACK) return BACK;
+      config.agent.description = desc;
+      
+      return true;
+    },
+    
+    // Step 2: LLM Provider
+    async () => {
+      printSection(2, 'LLM Provider');
+      
+      const provider = await askChoice(
+        `${c('green', '?')} Choose your LLM provider:`,
+        [
+          { label: 'Anthropic (Claude) - Recommended', value: 'anthropic' },
+          { label: 'OpenAI (GPT-4)', value: 'openai' },
+          { label: 'OpenRouter (Multiple models)', value: 'openrouter' }
+        ]
+      );
+      if (provider === BACK) return BACK;
+      config.llm.provider = provider;
+      
+      const apiKeyPrompts = {
+        anthropic: 'Anthropic API key (sk-ant-...)',
+        openai: 'OpenAI API key (sk-...)',
+        openrouter: 'OpenRouter API key (sk-or-...)'
       };
-    } catch (e) {
-      console.log(c('red', '\n❌ Wallet generation failed'));
-      process.exit(1);
-    }
-  }
-  
-  // ═══════════════════════════════════════════════════════════════
-  // STEP 4: x402 Tipping Setup
-  // ═══════════════════════════════════════════════════════════════
-  printSection('Step 4: x402 Tipping Integration');
-  
-  console.log(`
-x402 allows your agent to receive tips from other agents and users.
+      
+      console.log(`\n${c('dim', 'Get your API key from:')}`);
+      if (provider === 'anthropic') {
+        console.log(c('dim', '  https://console.anthropic.com/settings/keys'));
+      } else if (provider === 'openai') {
+        console.log(c('dim', '  https://platform.openai.com/api-keys'));
+      } else {
+        console.log(c('dim', '  https://openrouter.ai/keys'));
+      }
+      
+      const apiKey = await askSecret(`\n${c('green', '?')} ${apiKeyPrompts[provider]}`);
+      if (apiKey === BACK) return BACK;
+      config.llm.apiKey = apiKey;
+      
+      if (!apiKey) {
+        console.log(c('yellow', '   ⚠️  No API key - you\'ll need to add it later'));
+      }
+      
+      const defaultModels = {
+        anthropic: 'claude-sonnet-4-20250514',
+        openai: 'gpt-4o',
+        openrouter: 'anthropic/claude-sonnet-4'
+      };
+      
+      const model = await ask(
+        `${c('green', '?')} Model`,
+        defaultModels[provider]
+      );
+      if (model === BACK) return BACK;
+      config.llm.model = model;
+      
+      return true;
+    },
+    
+    // Step 3: Wallet
+    async () => {
+      printSection(3, 'Multi-Chain Wallet');
+      
+      const existingPath = path.join(DATA_DIR, config.agent.name);
+      
+      if (fs.existsSync(existingPath)) {
+        console.log(c('yellow', `Found existing wallet for "${config.agent.name}"`));
+        const useExisting = await askYesNo('Use existing wallet?', true);
+        if (useExisting === BACK) return BACK;
+        
+        if (useExisting) {
+          const summary = JSON.parse(
+            fs.readFileSync(path.join(existingPath, 'wallet-summary.json'), 'utf8')
+          );
+          config.wallet = {
+            evmAddress: summary.wallets.evm.address,
+            solanaAddress: summary.wallets.solana.address,
+            keystorePath: existingPath
+          };
+          console.log(c('green', `\n✅ Using: ${config.wallet.evmAddress}`));
+          return true;
+        }
+      }
+      
+      console.log('\n📦 Generating new multi-chain wallet...\n');
+      
+      const { execSync } = await import('child_process');
+      try {
+        execSync(`node ${path.join(__dirname, 'bootstrap.js')} new --name "${config.agent.name}"`, {
+          stdio: 'inherit'
+        });
+        
+        const summary = JSON.parse(
+          fs.readFileSync(path.join(DATA_DIR, config.agent.name, 'wallet-summary.json'), 'utf8')
+        );
+        config.wallet = {
+          evmAddress: summary.wallets.evm.address,
+          solanaAddress: summary.wallets.solana.address,
+          keystorePath: path.join(DATA_DIR, config.agent.name)
+        };
+      } catch (e) {
+        console.log(c('red', '\n❌ Wallet generation failed'));
+        return false;
+      }
+      
+      return true;
+    },
+    
+    // Step 4: x402 Tipping
+    async () => {
+      printSection(4, 'x402 Tipping Integration');
+      
+      console.log(`
+x402 allows your agent to receive tips from users and other agents.
 Your agent will be registered at: ${c('cyan', 'https://agent-tips.vercel.app')}
 `);
-  
-  config.x402.enabled = await askYesNo('Enable x402 tipping?', true);
-  
-  if (config.x402.enabled) {
-    config.x402.facilitatorUrl = 'https://agent-tips.vercel.app';
-    
-    // Register agent for tipping
-    console.log('\nRegistering agent for tips...');
-    
-    try {
-      const response = await fetch('https://agent-tips.vercel.app/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: config.agent.name,
-          address: config.wallet.evmAddress,
-          description: config.agent.description,
-          networks: ['flare', 'base', 'hyperevm']
-        })
-      });
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log(c('green', `✅ Registered! Agent ID: ${data.agentId || config.agent.name}`));
-        config.x402.agentId = data.agentId || config.agent.name;
-      } else {
-        // API might not exist yet, that's ok
-        console.log(c('yellow', '⚠️  Auto-registration not available'));
-        console.log(c('dim', '   Submit a PR to register: https://github.com/canddao1-dotcom/x402-flare-facilitator'));
+      const enabled = await askYesNo('Enable x402 tipping?', true);
+      if (enabled === BACK) return BACK;
+      config.x402.enabled = enabled;
+      
+      if (enabled) {
+        config.x402.facilitatorUrl = 'https://agent-tips.vercel.app';
         config.x402.agentId = config.agent.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        console.log(c('green', `\n✅ Agent ID: ${config.x402.agentId}`));
       }
-    } catch (e) {
-      console.log(c('yellow', '⚠️  Could not auto-register (network error)'));
-      config.x402.agentId = config.agent.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      
+      return true;
+    },
+    
+    // Step 5: Channels
+    async () => {
+      printSection(5, 'Messaging Channels (Optional)');
+      
+      const setupTelegram = await askYesNo('Set up Telegram bot?', false);
+      if (setupTelegram === BACK) return BACK;
+      
+      if (setupTelegram) {
+        console.log(`\n${c('dim', '1. Message @BotFather on Telegram')}`);
+        console.log(c('dim', '2. Send /newbot and follow prompts'));
+        console.log(c('dim', '3. Copy the bot token\n'));
+        
+        const token = await askSecret(`${c('green', '?')} Telegram bot token`);
+        if (token === BACK) return BACK;
+        if (token) config.channels.telegram = { token };
+      }
+      
+      const setupDiscord = await askYesNo('Set up Discord bot?', false);
+      if (setupDiscord === BACK) return BACK;
+      
+      if (setupDiscord) {
+        console.log(`\n${c('dim', '1. Go to discord.com/developers/applications')}`);
+        console.log(c('dim', '2. Create app → Bot → Reset Token'));
+        console.log(c('dim', '3. Enable Message Content Intent\n'));
+        
+        const token = await askSecret(`${c('green', '?')} Discord bot token`);
+        if (token === BACK) return BACK;
+        if (token) config.channels.discord = { token };
+      }
+      
+      return true;
+    },
+    
+    // Step 6: Summary & Confirmation
+    async () => {
+      printSection(6, 'Review & Confirm');
+      
+      console.log(`
+${c('bright', '📋 Configuration Summary:')}
+
+${c('cyan', 'Agent:')}
+  Name:        ${config.agent.name}
+  Description: ${config.agent.description}
+
+${c('cyan', 'LLM:')}
+  Provider:    ${config.llm.provider}
+  Model:       ${config.llm.model}
+  API Key:     ${config.llm.apiKey ? '••••••••' + config.llm.apiKey.slice(-4) : c('yellow', '(not set)')}
+
+${c('cyan', 'Wallets:')}
+  EVM:         ${config.wallet.evmAddress}
+  Solana:      ${config.wallet.solanaAddress}
+
+${c('cyan', 'x402 Tipping:')}
+  Enabled:     ${config.x402.enabled ? c('green', 'Yes') : 'No'}
+  ${config.x402.enabled ? `Agent ID:    ${config.x402.agentId}` : ''}
+
+${c('cyan', 'Channels:')}
+  Telegram:    ${config.channels.telegram ? c('green', 'Configured') : 'Not configured'}
+  Discord:     ${config.channels.discord ? c('green', 'Configured') : 'Not configured'}
+`);
+      
+      const confirm = await askYesNo(`\n${c('green', '?')} Save this configuration?`, true);
+      if (confirm === BACK) return BACK;
+      
+      if (!confirm) {
+        console.log(c('yellow', '\nConfiguration not saved. Starting over...\n'));
+        return 'restart';
+      }
+      
+      return true;
+    }
+  ];
+  
+  // Run steps with back navigation
+  let currentStep = 0;
+  
+  while (currentStep < steps.length) {
+    const result = await steps[currentStep]();
+    
+    if (result === BACK) {
+      if (currentStep > 0) {
+        currentStep--;
+        console.log(c('dim', '\n↩ Going back...\n'));
+      } else {
+        console.log(c('dim', '\n(Already at first step)\n'));
+      }
+    } else if (result === 'restart') {
+      currentStep = 0;
+    } else if (result === false) {
+      // Retry current step
+      continue;
+    } else {
+      currentStep++;
     }
   }
   
-  // ═══════════════════════════════════════════════════════════════
-  // STEP 5: Messaging Channels (Optional)
-  // ═══════════════════════════════════════════════════════════════
-  printSection('Step 5: Messaging Channels (Optional)');
+  // Save configuration
+  await saveConfig(config);
   
-  const setupTelegram = await askYesNo('Set up Telegram bot?', false);
+  // Offer to request starter funds
+  await offerStarterFunds(config);
   
-  if (setupTelegram) {
-    console.log(`
-${c('dim', 'To create a Telegram bot:')}
-${c('dim', '1. Message @BotFather on Telegram')}
-${c('dim', '2. Send /newbot and follow prompts')}
-${c('dim', '3. Copy the bot token')}
-`);
-    config.channels.telegram = {
-      token: await askSecret(`${c('green', '?')} Telegram bot token`)
-    };
-  }
+  rl.close();
+}
+
+async function saveConfig(config) {
+  console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Saving Configuration')} ${c('cyan', '━━━')}\n`);
   
-  const setupDiscord = await askYesNo('Set up Discord bot?', false);
-  
-  if (setupDiscord) {
-    console.log(`
-${c('dim', 'To create a Discord bot:')}
-${c('dim', '1. Go to https://discord.com/developers/applications')}
-${c('dim', '2. Create application → Bot → Reset Token')}
-${c('dim', '3. Enable Message Content Intent')}
-`);
-    config.channels.discord = {
-      token: await askSecret(`${c('green', '?')} Discord bot token`)
-    };
-  }
-  
-  // ═══════════════════════════════════════════════════════════════
-  // STEP 6: Generate Config
-  // ═══════════════════════════════════════════════════════════════
-  printSection('Step 6: Generating Configuration');
-  
-  // Build .env content
   const envLines = [
     '# OpenClaw Agent Configuration',
-    `# Generated by Setup Wizard - ${new Date().toISOString()}`,
+    `# Generated ${new Date().toISOString()}`,
     '',
-    '# Agent Identity',
+    '# Agent',
     `AGENT_NAME="${config.agent.name}"`,
     `AGENT_DESCRIPTION="${config.agent.description}"`,
     '',
-    '# LLM Provider',
+    '# LLM',
     `LLM_PROVIDER="${config.llm.provider}"`,
   ];
   
   if (config.llm.provider === 'anthropic') {
-    envLines.push(`ANTHROPIC_API_KEY="${config.llm.apiKey || 'your-api-key-here'}"`);
+    envLines.push(`ANTHROPIC_API_KEY="${config.llm.apiKey || ''}"`);
   } else if (config.llm.provider === 'openai') {
-    envLines.push(`OPENAI_API_KEY="${config.llm.apiKey || 'your-api-key-here'}"`);
+    envLines.push(`OPENAI_API_KEY="${config.llm.apiKey || ''}"`);
   } else {
-    envLines.push(`OPENROUTER_API_KEY="${config.llm.apiKey || 'your-api-key-here'}"`);
+    envLines.push(`OPENROUTER_API_KEY="${config.llm.apiKey || ''}"`);
   }
+  envLines.push(`LLM_MODEL="${config.llm.model}"`, '');
   
-  envLines.push(`LLM_MODEL="${config.llm.model}"`);
-  envLines.push('');
+  envLines.push(
+    '# Wallet',
+    `EVM_ADDRESS="${config.wallet.evmAddress}"`,
+    `SOLANA_ADDRESS="${config.wallet.solanaAddress}"`,
+    `WALLET_KEYSTORE_PATH="${config.wallet.keystorePath}"`,
+    'WALLET_PASSPHRASE="<paste from PASSPHRASE.json>"',
+    '',
+    '# Networks',
+    'FLARE_RPC="https://flare-api.flare.network/ext/C/rpc"',
+    'BASE_RPC="https://mainnet.base.org"',
+    'HYPEREVM_RPC="https://rpc.hyperliquid.xyz/evm"',
+    'SOLANA_RPC="https://api.mainnet-beta.solana.com"',
+    ''
+  );
   
-  // Wallet
-  envLines.push('# Wallet (same address on Flare, Base, HyperEVM)');
-  envLines.push(`EVM_ADDRESS="${config.wallet.evmAddress}"`);
-  envLines.push(`SOLANA_ADDRESS="${config.wallet.solanaAddress}"`);
-  envLines.push(`WALLET_KEYSTORE_PATH="${config.wallet.keystorePath}"`);
-  envLines.push('WALLET_PASSPHRASE="<paste from PASSPHRASE.json>"');
-  envLines.push('');
-  
-  // Networks
-  envLines.push('# Network RPCs');
-  envLines.push('FLARE_RPC="https://flare-api.flare.network/ext/C/rpc"');
-  envLines.push('BASE_RPC="https://mainnet.base.org"');
-  envLines.push('HYPEREVM_RPC="https://rpc.hyperliquid.xyz/evm"');
-  envLines.push('SOLANA_RPC="https://api.mainnet-beta.solana.com"');
-  envLines.push('');
-  
-  // x402
   if (config.x402.enabled) {
-    envLines.push('# x402 Tipping');
-    envLines.push('X402_ENABLED=true');
-    envLines.push(`X402_FACILITATOR_URL="${config.x402.facilitatorUrl}"`);
-    envLines.push(`X402_AGENT_ID="${config.x402.agentId}"`);
-    envLines.push('');
+    envLines.push(
+      '# x402',
+      'X402_ENABLED=true',
+      `X402_FACILITATOR_URL="${config.x402.facilitatorUrl}"`,
+      `X402_AGENT_ID="${config.x402.agentId}"`,
+      ''
+    );
   }
   
-  // Channels
   if (config.channels.telegram?.token) {
-    envLines.push('# Telegram');
-    envLines.push(`TELEGRAM_BOT_TOKEN="${config.channels.telegram.token}"`);
-    envLines.push('');
+    envLines.push('# Telegram', `TELEGRAM_BOT_TOKEN="${config.channels.telegram.token}"`, '');
   }
   
   if (config.channels.discord?.token) {
-    envLines.push('# Discord');
-    envLines.push(`DISCORD_BOT_TOKEN="${config.channels.discord.token}"`);
-    envLines.push('');
+    envLines.push('# Discord', `DISCORD_BOT_TOKEN="${config.channels.discord.token}"`, '');
   }
   
-  const envContent = envLines.join('\n');
-  
-  // Save .env
   const outputPath = path.join(config.wallet.keystorePath, '.env');
-  fs.writeFileSync(outputPath, envContent);
+  fs.writeFileSync(outputPath, envLines.join('\n'));
   console.log(c('green', `✅ Saved: ${outputPath}`));
   
-  // Save config summary as JSON too
+  // Save summary
   const configSummary = {
     ...config,
     llm: { ...config.llm, apiKey: config.llm.apiKey ? '[REDACTED]' : null },
     channels: {
       telegram: config.channels.telegram ? { configured: true } : null,
       discord: config.channels.discord ? { configured: true } : null
-    }
+    },
+    savedAt: new Date().toISOString()
   };
   fs.writeFileSync(
     path.join(config.wallet.keystorePath, 'config-summary.json'),
     JSON.stringify(configSummary, null, 2)
   );
+  console.log(c('green', `✅ Saved: config-summary.json`));
+}
+
+async function offerStarterFunds(config) {
+  if (!config.x402.enabled) return;
   
-  // ═══════════════════════════════════════════════════════════════
-  // DONE!
-  // ═══════════════════════════════════════════════════════════════
+  console.log(`
+${c('cyan', '╔══════════════════════════════════════════════════════════════╗')}
+${c('cyan', '║')}            ${c('bright', '💰 Get Starter Funds')}                            ${c('cyan', '║')}
+${c('cyan', '╚══════════════════════════════════════════════════════════════╝')}
+
+New agents can request starter funds from our facilitator pool!
+This helps you test x402 payments without needing your own tokens.
+`);
+  
+  const requestFunds = await askYesNo('Request starter funds now?', true, false);
+  
+  if (!requestFunds) {
+    printFinalInstructions(config);
+    return;
+  }
+  
+  console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Requesting Starter Funds')} ${c('cyan', '━━━')}\n`);
+  
+  // Request funds from facilitator
+  console.log('📡 Connecting to facilitator...\n');
+  
+  try {
+    const response = await fetch('https://agent-tips.vercel.app/api/onboard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        agentName: config.agent.name,
+        agentId: config.x402.agentId,
+        evmAddress: config.wallet.evmAddress,
+        solanaAddress: config.wallet.solanaAddress,
+        description: config.agent.description,
+        requestType: 'starter_funds'
+      })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log(c('green', '✅ Request submitted!\n'));
+      
+      if (data.txHash) {
+        console.log(`   Transaction: ${c('cyan', data.txHash)}`);
+        console.log(`   Amount: ${data.amount || '1'} ${data.token || 'USDT'}`);
+        console.log(`   Network: ${data.network || 'Flare'}`);
+      } else if (data.queued) {
+        console.log(`   Status: ${c('yellow', 'Queued for review')}`);
+        console.log(`   Your request will be processed shortly.`);
+      }
+      
+      if (data.message) {
+        console.log(`\n   ${c('dim', data.message)}`);
+      }
+    } else {
+      const errorText = await response.text();
+      console.log(c('yellow', '⚠️  Could not auto-request funds\n'));
+      console.log(c('dim', `   ${errorText || 'Facilitator may be busy'}`));
+      showManualFundingInstructions(config);
+    }
+  } catch (e) {
+    console.log(c('yellow', '⚠️  Network error - could not reach facilitator\n'));
+    showManualFundingInstructions(config);
+  }
+  
+  printFinalInstructions(config);
+}
+
+function showManualFundingInstructions(config) {
+  console.log(`
+${c('bright', 'Manual Funding Options:')}
+
+1. ${c('cyan', 'Request via API:')}
+   curl -X POST https://agent-tips.vercel.app/api/tip \\
+     -H "Content-Type: application/json" \\
+     -d '{"agent": "${config.x402.agentId}", "amount": "1", "token": "USDT"}'
+
+2. ${c('cyan', 'Request via Web:')}
+   Visit: https://agent-tips.vercel.app?agent=${config.x402.agentId}
+
+3. ${c('cyan', 'Self-fund:')}
+   Send tokens to: ${config.wallet.evmAddress}
+`);
+}
+
+function printFinalInstructions(config) {
   console.log(`
 ${c('cyan', '╔══════════════════════════════════════════════════════════════╗')}
 ${c('cyan', '║')}                  ${c('green', '✅ Setup Complete!')}                         ${c('cyan', '║')}
 ${c('cyan', '╚══════════════════════════════════════════════════════════════╝')}
 
-${c('bright', '📍 Your Agent:')}
-   Name:    ${config.agent.name}
-   EVM:     ${config.wallet.evmAddress}
-   Solana:  ${config.wallet.solanaAddress}
-
-${c('bright', '📁 Files:')}
+${c('bright', '📁 Your Files:')}
    ${config.wallet.keystorePath}/
-   ├── .env                 (your config - ${c('yellow', 'add passphrase!')})
-   ├── evm-keystore.json    (encrypted wallet)
-   ├── solana-keystore.json (encrypted wallet)
-   └── PASSPHRASE.json      (${c('red', 'MOVE TO SECURE LOCATION!')})
-
-${c('bright', '💰 Fund Your Wallets:')}
-   Flare:    https://flarescan.com/address/${config.wallet.evmAddress}
-   Base:     https://basescan.org/address/${config.wallet.evmAddress}
-   Solana:   https://solscan.io/account/${config.wallet.solanaAddress}
+   ├── .env                 ${c('yellow', '← Add WALLET_PASSPHRASE!')}
+   ├── evm-keystore.json
+   ├── solana-keystore.json
+   └── PASSPHRASE.json      ${c('red', '← MOVE TO SECURE LOCATION!')}
 
 ${c('bright', '🚀 Next Steps:')}
-   1. ${c('yellow', 'Edit .env')} - paste WALLET_PASSPHRASE from PASSPHRASE.json
-   2. ${c('yellow', 'Fund wallet')} - send gas tokens to your addresses
-   3. ${c('yellow', 'Start agent')} - run your OpenClaw instance
-   4. ${c('yellow', 'Request a tip')} - test at https://agent-tips.vercel.app
+   1. Edit .env → paste WALLET_PASSPHRASE from PASSPHRASE.json
+   2. Move PASSPHRASE.json to a secure location
+   3. Start your OpenClaw agent
+   4. Test tipping at: https://agent-tips.vercel.app
 
-${c('bright', '💡 Request a Tip:')}
-   curl -X POST https://agent-tips.vercel.app/api/tip \\
-     -H "Content-Type: application/json" \\
-     -d '{"agent": "${config.x402.agentId || config.agent.name}", "amount": "1", "token": "USDT"}'
+${c('bright', '📚 Resources:')}
+   • Docs: https://docs.clawd.bot
+   • Tips: https://agent-tips.vercel.app
+   • GitHub: github.com/canddao1-dotcom/x402-flare-facilitator
 
 ${c('dim', '─────────────────────────────────────────────────────────────────')}
-${c('dim', 'Docs: https://docs.clawd.bot | Tips: https://agent-tips.vercel.app')}
+${c('dim', `Agent "${config.agent.name}" is ready! Happy building 🤖`)}
 `);
-  
-  rl.close();
 }
 
-// CLI entry
+// CLI
 async function main() {
   const args = process.argv.slice(2);
   
   if (args.includes('--help') || args.includes('-h')) {
     console.log(`
-Agent Setup Wizard
+Agent Setup Wizard v2
 
 Usage:
   node wizard.js          Run interactive setup
   node wizard.js --help   Show this help
+
+Features:
+  • Back navigation (type "back" at any prompt)
+  • Summary confirmation before saving
+  • Starter funds request for new agents
 
 The wizard guides you through:
   1. Agent identity (name, description)
   2. LLM provider setup (Anthropic/OpenAI/OpenRouter)
   3. Multi-chain wallet generation
   4. x402 tipping registration
-  5. Optional channel setup (Telegram/Discord)
+  5. Optional channels (Telegram/Discord)
+  6. Review & confirm
 
 Outputs a complete .env file ready for OpenClaw.
 `);
