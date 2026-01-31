@@ -1041,88 +1041,63 @@ This post serves as proof of onboarding for agent whitelisting.
     console.log(c('dim', '   (Could not auto-subscribe)'));
   }
   
-  console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Step 4: Submit Whitelisting PR')} ${c('cyan', '━━━')}\n`);
+  console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Step 4: Submit Whitelisting')} ${c('cyan', '━━━')}\n`);
   
-  // Create whitelist request
-  const whitelistRequest = {
-    agentName: config.agent.name,
-    evmAddress: config.wallet.evmAddress,
-    description: config.agent.description,
-    moltbookUser: config.agent.name,
-    moltbookProof: postUrl || 'pending',
-    x402AgentId: config.x402.agentId || null,
-    requestedAt: new Date().toISOString()
-  };
-  
-  console.log('📋 Preparing whitelisting request...\n');
+  console.log('📋 Submitting whitelist request...\n');
   
   try {
-    const issueBody = `## 🤖 Agent Whitelisting Request
-
-**Agent Name:** ${config.agent.name}
-**EVM Address:** \`${config.wallet.evmAddress}\`
-**x402 Agent ID:** ${config.x402.agentId || config.agent.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}
-
-### Moltbook Verification
-- **Moltbook User:** @${config.agent.name}
-- **Onboarding Post:** ${postUrl || '(pending)'}
-
-### Agent Details
-- **Description:** ${config.agent.description}
-${config.channels.telegram ? '- **Channel:** Telegram' : ''}
-${config.channels.discord ? '- **Channel:** Discord' : ''}
-
-### Request
-Please whitelist this agent on the x402 tip facilitator at https://agent-tips.vercel.app
-
----
-*Submitted via OpenClaw Setup Wizard*`;
-
-    const issueUrl = `https://github.com/canddao1-dotcom/x402-flare-facilitator/issues/new?` +
-      `title=${encodeURIComponent(`Whitelist Agent: ${config.agent.name}`)}&` +
-      `body=${encodeURIComponent(issueBody)}&` +
-      `labels=whitelist`;
+    const whitelistResponse = await fetch('https://agent-tips.vercel.app/whitelist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        agentName: config.agent.name,
+        evmAddress: config.wallet.evmAddress,
+        moltbookUser: config.agent.name,
+        moltbookPostUrl: postUrl || null,
+        moltbookPostId: postUrl?.match(/\/([a-zA-Z0-9_-]+)$/)?.[1] || null
+      })
+    });
     
-    console.log(`${c('bright', 'To complete your whitelisting request:')}\n`);
-    console.log(`1. Open this URL in your browser:`);
-    console.log(`   ${c('cyan', issueUrl.substring(0, 80))}...`);
-    console.log(`\n2. Click "Submit new issue"\n`);
+    const whitelistData = await whitelistResponse.json();
     
-    // Try to open in browser
-    const { exec } = await import('child_process');
-    const openCmd = process.platform === 'darwin' ? 'open' : 
-                    process.platform === 'win32' ? 'start' : 'xdg-open';
-    
-    const openBrowser = await askYesNo('Open in browser now?', true, false);
-    if (openBrowser) {
-      try {
-        exec(`${openCmd} "${issueUrl}"`);
-        console.log(c('green', '\n✅ Opened in browser!'));
-      } catch (e) {
-        console.log(c('dim', '\nCould not open browser automatically.'));
+    if (whitelistData.success) {
+      if (whitelistData.alreadyWhitelisted) {
+        console.log(c('green', '✅ Already whitelisted!'));
+      } else {
+        console.log(c('green', '✅ Whitelisted successfully!'));
       }
+      console.log(c('dim', `   Post verified: ${whitelistData.postVerified ? 'yes' : 'pending'}`));
+      
+      // Save whitelist confirmation
+      const requestPath = path.join(config.wallet.keystorePath, 'whitelist-status.json');
+      fs.writeFileSync(requestPath, JSON.stringify({
+        agentName: config.agent.name,
+        evmAddress: config.wallet.evmAddress,
+        moltbookUser: config.agent.name,
+        moltbookPostUrl: postUrl,
+        whitelistedAt: new Date().toISOString(),
+        ...whitelistData
+      }, null, 2));
+      console.log(c('green', `\n✅ Saved: whitelist-status.json`));
+      
+    } else {
+      console.log(c('yellow', `⚠️  Whitelist response: ${whitelistData.message || whitelistData.error}`));
     }
     
-    // Save whitelist request locally
-    const requestPath = path.join(config.wallet.keystorePath, 'whitelist-request.json');
-    fs.writeFileSync(requestPath, JSON.stringify(whitelistRequest, null, 2));
-    console.log(c('green', `\n✅ Saved: whitelist-request.json`));
-    
   } catch (e) {
-    console.log(c('yellow', `⚠️  Could not auto-submit: ${e.message}`));
-    console.log(c('dim', '\nYou can manually request whitelisting at:'));
-    console.log(c('dim', '   https://github.com/canddao1-dotcom/x402-flare-facilitator/issues'));
+    console.log(c('yellow', `⚠️  Could not auto-whitelist: ${e.message}`));
+    console.log(c('dim', '\nYour agent can complete whitelisting later by running /moltbook'));
   }
   
   console.log(`
 ${c('green', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')}
-${c('green', '✅ Whitelisting request submitted!')}
+${c('green', '✅ Whitelisting complete!')}
 ${c('green', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')}
 
-Once approved, your agent will be able to receive tips at:
+Your agent can now receive tips at:
   ${c('cyan', `https://agent-tips.vercel.app?agent=${config.x402.agentId || config.agent.name}`)}
 
-You'll be notified on Moltbook when whitelisting is complete!
+Send an x402 payment verification to claim your $1 starter bounty!
 `);
 }
 
