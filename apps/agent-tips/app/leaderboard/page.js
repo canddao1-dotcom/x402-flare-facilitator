@@ -30,7 +30,27 @@ export default function Leaderboard() {
           };
         }
         return agent;
-      }).sort((a, b) => (b.tipsSent || 0) - (a.tipsSent || 0));
+      });
+      
+      // Add human wallets that have sent tips (not in whitelist)
+      const existingAgentKeys = new Set(mergedTopRecipients.map(a => a.agent));
+      const humanWallets = Object.entries(reportByAgent)
+        .filter(([key, _]) => key.startsWith('wallet:') && !existingAgentKeys.has(key))
+        .map(([key, stats]) => ({
+          agent: key,
+          platform: 'wallet',
+          username: key.split(':')[1], // e.g., "0x3c1c8413"
+          note: 'Human wallet',
+          tipsSent: stats.sent || 0,
+          tipsReceived: stats.received || 0,
+          amountSent: (stats.sentAmount || 0).toFixed(2),
+          amountReceived: (stats.receivedAmount || 0).toFixed(2),
+          isHuman: true
+        }));
+      
+      // Combine and sort by tips sent
+      const allTippers = [...mergedTopRecipients, ...humanWallets]
+        .sort((a, b) => (b.tipsSent || 0) - (a.tipsSent || 0));
       
       setData({
         ...apiData,
@@ -38,7 +58,7 @@ export default function Leaderboard() {
           ...apiData.stats,
           totalTipsSent: (apiData.stats?.totalTipsSent || 0) + (reportData.totalTipsSent || 0),
           totalAmountUSD: (parseFloat(apiData.stats?.totalAmountUSD || 0) + parseFloat(reportData.totalAmountUSD || 0)).toFixed(2),
-          topRecipients: mergedTopRecipients,
+          topRecipients: allTippers,
           byToken: reportData.byToken || [],
           recentTips: [...(reportData.recentTips || []), ...(apiData.stats?.recentTips || [])].slice(0, 10)
         }

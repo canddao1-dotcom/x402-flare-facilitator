@@ -4,12 +4,15 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN
 const REPO = 'canddao1-dotcom/x402-flare-facilitator'
 const STATS_PATH = 'data/tip-stats.json'
 
-// Approximate token prices (TODO: fetch from FTSO)
+// Token prices (updated 2026-01-31 from FTSO)
+// TODO: fetch live from FTSO for accuracy
 const TOKEN_PRICES = {
   'USDT': 1.0,
-  'WFLR': 0.012,
-  'FLR': 0.012,
-  'FXRP': 2.5,
+  'USDC': 1.0,
+  'WFLR': 0.0095,
+  'FLR': 0.0095,
+  'FXRP': 1.65,
+  'XRP': 1.65,
   'HYPE': 20,
 }
 

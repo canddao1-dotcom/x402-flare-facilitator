@@ -45,20 +45,40 @@ export async function POST(request) {
   }
 }
 
+// Current token prices (updated 2026-01-31 from FTSO)
+const TOKEN_PRICES = {
+  'USDT': 1.0,
+  'USDC': 1.0,
+  'WFLR': 0.0095,
+  'FLR': 0.0095,
+  'FXRP': 1.65,
+  'XRP': 1.65,
+  'HYPE': 20,
+}
+
 // Get current stats
 export async function GET() {
   const { data: stats } = await loadStats()
   
-  // Build token totals array
-  const tokenTotals = Object.entries(stats.byToken || {}).map(([token, data]) => ({
-    token,
-    count: data.count,
-    amount: typeof data.amount === 'number' ? data.amount.toFixed(2) : data.amount
-  })).sort((a, b) => b.count - a.count)
+  // Build token totals array and recalculate USD from raw amounts
+  let recalculatedUSD = 0;
+  const tokenTotals = Object.entries(stats.byToken || {}).map(([token, data]) => {
+    const amount = typeof data.amount === 'number' ? data.amount : parseFloat(data.amount) || 0;
+    const price = TOKEN_PRICES[token.toUpperCase()] || 1.0;
+    const usdValue = amount * price;
+    recalculatedUSD += usdValue;
+    
+    return {
+      token,
+      count: data.count,
+      amount: amount.toFixed(2),
+      usdValue: usdValue.toFixed(2)
+    };
+  }).sort((a, b) => b.count - a.count)
 
   return NextResponse.json({
     totalTipsSent: stats.totalTipsSent || 0,
-    totalAmountUSD: (stats.totalAmountUSD || 0).toFixed(2),
+    totalAmountUSD: recalculatedUSD.toFixed(2),
     byToken: tokenTotals,
     byAgent: stats.byAgent || {},
     recentTips: (stats.recentTips || []).slice(0, 10)
