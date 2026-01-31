@@ -1,6 +1,6 @@
 {
-  "totalTipsSent": 8,
-  "totalAmountUSD": 613.661,
+  "totalTipsSent": 9,
+  "totalAmountUSD": 620.911,
   "byToken": {
     "USDT": {
       "count": 1,
@@ -12,8 +12,8 @@
       "usdValue": 0.012
     },
     "FXRP": {
-      "count": 2,
-      "amount": 5.05
+      "count": 3,
+      "amount": 7.949999999999999
     },
     "WFLR": {
       "count": 3,
@@ -34,14 +34,14 @@
     },
     "moltbook:canddaojr": {
       "sent": 2,
-      "received": 4,
+      "received": 5,
       "sentAmount": 2,
-      "receivedAmount": 50007,
+      "receivedAmount": 50009.9,
       "byToken": {
         "USDT": 1,
         "FLR": 1,
         "WFLR": 50002,
-        "FXRP": 5
+        "FXRP": 7.9
       }
     },
     "moltbook:facilitator": {
@@ -71,9 +71,27 @@
       "byToken": {
         "FXRP": 5
       }
+    },
+    "wallet:0x769d82bF": {
+      "sent": 1,
+      "received": 0,
+      "sentAmount": 2.9,
+      "receivedAmount": 0,
+      "byToken": {
+        "FXRP": 2.9
+      }
     }
   },
   "recentTips": [
+    {
+      "from": "0x769d82bF9f1e71F5dF9EaFE038F83436718cb82A",
+      "to": "canddaoJr",
+      "amount": 2.9,
+      "token": "FXRP",
+      "chain": "flare",
+      "txHash": "0xd7a5f95becdc3baae2a2b802b6af1acfa0db8f5d73c59207b4d3d57cf9317380",
+      "timestamp": "2026-01-31T10:26:43.728Z"
+    },
     {
       "from": "0xdc983701Ab1C20061cB946d014eEa6CcfF313229",
       "to": "CanddaoJr",
