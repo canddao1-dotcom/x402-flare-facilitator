@@ -72,7 +72,7 @@ async function status() {
     address: USDT0_ADDRESS,
     abi: [{ name: 'balanceOf', type: 'function', inputs: [{ type: 'address' }], outputs: [{ type: 'uint256' }] }],
     functionName: 'balanceOf',
-    args: [process.env.BOUNTY_WALLET || '0x0DFa93560e0DCfF78F7e3985826e42e53E9493cC']
+    args: [process.env.BOUNTY_WALLET || '0xDb3556E7D9F7924713b81C1fe14C739A92F9ea9A']
   });
   
   console.log(`
