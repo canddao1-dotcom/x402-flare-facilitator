@@ -64,7 +64,7 @@ export default function Leaderboard() {
       // Add human wallets that have sent tips (not in whitelist)
       const existingAgentKeys = new Set(mergedTopRecipients.map(a => a.agent));
       const humanWallets = Object.entries(reportByAgent)
-        .filter(([key, _]) => key.startsWith('wallet:') && !existingAgentKeys.has(key))
+        .filter(([key, _]) => (key.startsWith('wallet:') || key.startsWith('human:')) && !existingAgentKeys.has(key))
         .map(([key, stats]) => ({
           agent: key,
           platform: 'human',
