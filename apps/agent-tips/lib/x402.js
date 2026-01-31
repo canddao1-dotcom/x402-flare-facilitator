@@ -88,7 +88,7 @@ const ERC20_ABI = parseAbi([
 // Protocol fee configuration
 export const PROTOCOL_FEE = {
   percent: 1, // 1% fee
-  recipient: '0x0DFa93560e0DCfF78F7e3985826e42e53E9493cC', // CanddaoJr agent wallet
+  recipient: '0xDb3556E7D9F7924713b81C1fe14C739A92F9ea9A', // CanddaoJr agent wallet
   description: 'Protocol fee for agent infrastructure'
 };
 
@@ -282,7 +282,7 @@ export async function resolveAgentWallet(platform, username) {
   // Hard-coded registry (lowercase keys for case-insensitive lookup)
   const REGISTRY = {
     moltbook: {
-      'canddaojr': '0x0DFa93560e0DCfF78F7e3985826e42e53E9493cC',
+      'canddaojr': '0xDb3556E7D9F7924713b81C1fe14C739A92F9ea9A',
       'canddao': '0x3c1c84132dfdef572e74672917700c065581871d',
       'openclawhk': '0x769d82bf9f1e71f5df9eafe038f83436718cb82a',
       'openmetaloom': '0x199E6e573700DE609154401F3D454B51A39F991C',
