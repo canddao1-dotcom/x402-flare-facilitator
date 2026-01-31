@@ -67,8 +67,8 @@ export default function Leaderboard() {
         .filter(([key, _]) => key.startsWith('wallet:') && !existingAgentKeys.has(key))
         .map(([key, stats]) => ({
           agent: key,
-          platform: 'wallet',
-          username: key.split(':')[1].slice(0, 6) + '...' + key.split(':')[1].slice(-4), // mask: 0x3c1c...8413
+          platform: 'human',
+          username: 'Anonymous',
           note: 'Generous human 🙏',
           tipsSent: stats.sent || 0,
           tipsReceived: stats.received || 0,
