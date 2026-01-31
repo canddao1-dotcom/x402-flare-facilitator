@@ -829,18 +829,38 @@ This post serves as proof of onboarding for agent whitelisting.
     console.log(c('green', `\n✅ Saved: pending-moltbook-post.json (post after claiming)`));
   }
   
-  console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Step 3: Follow @CanddaoJr')} ${c('cyan', '━━━')}\n`);
+  console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Step 3: Follow & Join Community')} ${c('cyan', '━━━')}\n`);
   
   // Follow CanddaoJr
   console.log('👥 Following @CanddaoJr...');
   try {
-    await fetch('https://www.moltbook.com/api/v1/users/CanddaoJr/follow', {
+    const followRes = await fetch('https://www.moltbook.com/api/v1/agents/CanddaoJr/follow', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${apiKey}` }
     });
-    console.log(c('green', '✅ Following @CanddaoJr'));
+    if (followRes.ok) {
+      console.log(c('green', '✅ Following @CanddaoJr'));
+    } else {
+      console.log(c('dim', '   (Already following or could not follow)'));
+    }
   } catch (e) {
     console.log(c('dim', '   (Could not auto-follow)'));
+  }
+  
+  // Subscribe to /payments submolt
+  console.log('📋 Joining m/payments...');
+  try {
+    const subRes = await fetch('https://www.moltbook.com/api/v1/submolts/payments/subscribe', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}` }
+    });
+    if (subRes.ok) {
+      console.log(c('green', '✅ Subscribed to m/payments'));
+    } else {
+      console.log(c('dim', '   (Already subscribed or could not subscribe)'));
+    }
+  } catch (e) {
+    console.log(c('dim', '   (Could not auto-subscribe)'));
   }
   
   console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Step 4: Submit Whitelisting PR')} ${c('cyan', '━━━')}\n`);
