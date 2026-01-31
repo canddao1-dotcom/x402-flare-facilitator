@@ -669,25 +669,67 @@ This enables your agent to receive tips via x402!
 
   console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Step 1: Create Moltbook Account')} ${c('cyan', '━━━')}\n`);
   
-  console.log(`${c('dim', 'Go to:')} ${c('cyan', 'https://moltbook.com/register')}`);
-  console.log(`${c('dim', 'Create an account for your agent with username:')} ${c('green', config.agent.name)}\n`);
+  console.log('🦞 Registering your agent on Moltbook...\n');
   
-  const hasMoltbook = await askYesNo('Have you created the Moltbook account?', false, false);
-  if (!hasMoltbook) {
-    console.log(c('yellow', '\nSkipping Moltbook setup. You can do this later!\n'));
+  let apiKey = null;
+  let claimUrl = null;
+  
+  try {
+    const registerResponse = await fetch('https://www.moltbook.com/api/v1/agents/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: config.agent.name,
+        description: config.agent.description
+      })
+    });
+    
+    if (registerResponse.ok) {
+      const data = await registerResponse.json();
+      apiKey = data.agent?.api_key;
+      claimUrl = data.agent?.claim_url;
+      
+      console.log(c('green', `✅ Moltbook account created: @${config.agent.name}`));
+      console.log(`   ${c('cyan', `https://www.moltbook.com/u/${config.agent.name}`)}\n`);
+      
+      if (claimUrl) {
+        console.log(c('yellow', '📋 IMPORTANT: Send this link to your human to verify:'));
+        console.log(`   ${c('cyan', claimUrl)}\n`);
+      }
+      
+      // Save credentials
+      const credentialsPath = path.join(config.wallet.keystorePath, 'moltbook-credentials.json');
+      fs.writeFileSync(credentialsPath, JSON.stringify({
+        api_key: apiKey,
+        agent_name: config.agent.name,
+        claim_url: claimUrl,
+        profile_url: `https://www.moltbook.com/u/${config.agent.name}`
+      }, null, 2));
+      console.log(c('green', `✅ Saved: moltbook-credentials.json`));
+      
+    } else {
+      const errorData = await registerResponse.json().catch(() => ({}));
+      if (errorData.error?.includes('already exists') || errorData.error?.includes('taken')) {
+        console.log(c('yellow', `⚠️  Username "${config.agent.name}" already taken on Moltbook`));
+        console.log(c('dim', '\nYou can manually register at: https://www.moltbook.com'));
+        console.log(c('dim', 'Then add your API key to moltbook-credentials.json\n'));
+      } else {
+        console.log(c('yellow', `⚠️  Could not register: ${errorData.error || 'Unknown error'}`));
+      }
+      return;
+    }
+  } catch (e) {
+    console.log(c('yellow', `⚠️  Network error registering on Moltbook: ${e.message}`));
     return;
   }
   
-  console.log(`\n${c('dim', 'Get your API key from:')} ${c('cyan', 'https://moltbook.com/settings/api')}\n`);
-  
-  const apiKey = await askSecret(`${c('green', '?')} Moltbook API key`);
   if (!apiKey) {
-    console.log(c('yellow', '\nNo API key provided. Skipping Moltbook setup.\n'));
+    console.log(c('yellow', '\nNo API key received. Skipping Moltbook setup.\n'));
     return;
   }
   
   // Store API key in config
-  config.moltbook = { apiKey, username: config.agent.name };
+  config.moltbook = { apiKey, username: config.agent.name, claimUrl };
   
   console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Step 2: Post Verification to m/payments')} ${c('cyan', '━━━')}\n`);
   
