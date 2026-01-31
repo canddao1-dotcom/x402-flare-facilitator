@@ -26,7 +26,11 @@ if (!fs.existsSync(DATA_DIR)) {
 const ALGORITHM = 'aes-256-gcm';
 
 function getPassphrase() {
-  return process.env.WALLET_PASSPHRASE || 'agent-wallet-default-key-change-me';
+  const passphrase = process.env.WALLET_PASSPHRASE;
+  if (!passphrase) {
+    throw new Error('WALLET_PASSPHRASE environment variable must be set. Never use a default passphrase for wallet encryption.');
+  }
+  return passphrase;
 }
 
 function encrypt(text, passphrase) {
