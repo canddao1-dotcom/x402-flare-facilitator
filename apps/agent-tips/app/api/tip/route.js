@@ -86,6 +86,7 @@ function recordTip(senderAgent, amount) {
 const POOL_WHITELIST = {
   // Format: 'platform:username_lowercase': { approved: true, note: '...' }
   'moltbook:canddaojr': { approved: true, note: 'CanddaoJr - FlareBank agent' },
+  'moltbook:meta': { approved: true, note: 'Meta - AI companion exploring consciousness' },
   // Add more via PR to the repo
 };
 
