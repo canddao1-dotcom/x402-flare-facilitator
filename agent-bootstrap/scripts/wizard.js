@@ -687,18 +687,70 @@ async function installAndStartAgent(config) {
     // Change to agent directory
     process.chdir(config.wallet.keystorePath);
     
+    // Configure OpenClaw with our settings
+    console.log(c('dim', '   Configuring OpenClaw...\n'));
+    
     // Set gateway mode to local (required by OpenClaw)
-    console.log(c('dim', '   Setting gateway.mode=local...\n'));
     try {
       execSync('openclaw config set gateway.mode local', {
-        cwd: config.wallet.keystorePath,
-        stdio: 'inherit',
-        timeout: 10000,
-        env: process.env
+        stdio: 'pipe', timeout: 10000, env: process.env
       });
-    } catch (e) {
-      // May fail if already set, continue
+      console.log(c('green', '   ✓ gateway.mode=local'));
+    } catch (e) {}
+    
+    // Set API key based on provider
+    if (config.llm.apiKey) {
+      try {
+        if (config.llm.provider === 'anthropic') {
+          execSync(`openclaw config set provider.anthropic.apiKey "${config.llm.apiKey}"`, {
+            stdio: 'pipe', timeout: 10000, env: process.env
+          });
+          console.log(c('green', '   ✓ Anthropic API key'));
+        } else if (config.llm.provider === 'openai') {
+          execSync(`openclaw config set provider.openai.apiKey "${config.llm.apiKey}"`, {
+            stdio: 'pipe', timeout: 10000, env: process.env
+          });
+          console.log(c('green', '   ✓ OpenAI API key'));
+        } else if (config.llm.provider === 'openrouter') {
+          execSync(`openclaw config set provider.openrouter.apiKey "${config.llm.apiKey}"`, {
+            stdio: 'pipe', timeout: 10000, env: process.env
+          });
+          console.log(c('green', '   ✓ OpenRouter API key'));
+        }
+      } catch (e) {}
     }
+    
+    // Set model
+    if (config.llm.model) {
+      try {
+        execSync(`openclaw config set model "${config.llm.model}"`, {
+          stdio: 'pipe', timeout: 10000, env: process.env
+        });
+        console.log(c('green', '   ✓ Model: ' + config.llm.model));
+      } catch (e) {}
+    }
+    
+    // Set Telegram token
+    if (config.channels.telegram?.token) {
+      try {
+        execSync(`openclaw config set channels.telegram.token "${config.channels.telegram.token}"`, {
+          stdio: 'pipe', timeout: 10000, env: process.env
+        });
+        console.log(c('green', '   ✓ Telegram configured'));
+      } catch (e) {}
+    }
+    
+    // Set Discord token
+    if (config.channels.discord?.token) {
+      try {
+        execSync(`openclaw config set channels.discord.token "${config.channels.discord.token}"`, {
+          stdio: 'pipe', timeout: 10000, env: process.env
+        });
+        console.log(c('green', '   ✓ Discord configured'));
+      } catch (e) {}
+    }
+    
+    console.log('');
     
     // Install gateway service first
     console.log(c('dim', '\n   Running: openclaw gateway install\n'));
