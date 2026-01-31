@@ -46,7 +46,7 @@ fi
 cd apps/agent-tips
 
 echo "📦 Installing dependencies..."
-npm install --quiet 2>/dev/null
+npm install --quiet --no-audit 2>/dev/null
 
 echo ""
 echo "╔══════════════════════════════════════════════════════════════╗"
@@ -69,7 +69,11 @@ if [ ! -f ".env.local" ]; then
     echo ""
     
     # Facilitator wallet
-    read -p "🔑 Facilitator wallet private key (0x...): " PRIV_KEY < /dev/tty
+    read -p "🔑 Facilitator wallet private key (0x...) [Enter to skip]: " PRIV_KEY < /dev/tty
+    
+    if [ -z "$PRIV_KEY" ]; then
+        echo "   ⚠️  No key provided. Add FACILITATOR_PRIVATE_KEY to .env.local before deploying."
+    fi
     
     # RPC (optional)
     read -p "🌐 Flare RPC URL [https://flare-api.flare.network/ext/C/rpc]: " RPC_URL < /dev/tty
