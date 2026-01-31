@@ -261,15 +261,30 @@ async function runWizard() {
         console.log(c('yellow', '   ⚠️  No API key - you\'ll need to add it later'));
       }
       
-      const defaultModels = {
-        anthropic: 'claude-sonnet-4-20250514',
-        openai: 'gpt-4o',
-        openrouter: 'anthropic/claude-sonnet-4'
+      const modelChoices = {
+        anthropic: [
+          { label: 'Claude Sonnet 4 (Recommended)', value: 'claude-sonnet-4-20250514' },
+          { label: 'Claude Opus 4 (Most capable)', value: 'claude-opus-4-20250514' },
+          { label: 'Claude Haiku 3.5 (Fast & cheap)', value: 'claude-3-5-haiku-20241022' }
+        ],
+        openai: [
+          { label: 'GPT-4o (Recommended)', value: 'gpt-4o' },
+          { label: 'GPT-4o Mini (Fast & cheap)', value: 'gpt-4o-mini' },
+          { label: 'GPT-4 Turbo', value: 'gpt-4-turbo' },
+          { label: 'o1 (Reasoning)', value: 'o1' }
+        ],
+        openrouter: [
+          { label: 'Claude Sonnet 4 (Recommended)', value: 'anthropic/claude-sonnet-4' },
+          { label: 'Claude Opus 4', value: 'anthropic/claude-opus-4' },
+          { label: 'GPT-4o', value: 'openai/gpt-4o' },
+          { label: 'Llama 3.1 405B', value: 'meta-llama/llama-3.1-405b-instruct' },
+          { label: 'Gemini Pro 1.5', value: 'google/gemini-pro-1.5' }
+        ]
       };
       
-      const model = await ask(
-        `${c('green', '?')} Model`,
-        defaultModels[provider]
+      const model = await askChoice(
+        `${c('green', '?')} Choose your model:`,
+        modelChoices[provider]
       );
       if (model === BACK) return BACK;
       config.llm.model = model;
