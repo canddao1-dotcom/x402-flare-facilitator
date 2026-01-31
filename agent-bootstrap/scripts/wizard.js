@@ -606,45 +606,64 @@ async function installAndStartAgent(config) {
   console.log(c('green', `✅ Saved: ${configPath}`));
   
   // Step 3: Start the gateway
-  console.log('\n🚀 Starting Clawdbot Gateway...\n');
+  console.log('\n🚀 Starting Clawdbot Gateway...');
+  console.log(c('dim', `   Working directory: ${config.wallet.keystorePath}\n`));
   
   try {
-    // Change to agent directory and start
+    // Change to agent directory
     process.chdir(config.wallet.keystorePath);
     
-    // Start gateway in background
-    const gateway = spawn('clawdbot', ['gateway', 'start'], {
-      detached: true,
-      stdio: 'ignore',
-      cwd: config.wallet.keystorePath
-    });
-    gateway.unref();
+    // Start gateway and capture output
+    console.log(c('dim', '   Running: clawdbot gateway start\n'));
     
-    // Wait a moment for startup
-    await new Promise(r => setTimeout(r, 3000));
+    try {
+      // Try to start with visible output
+      execSync('clawdbot gateway start', {
+        cwd: config.wallet.keystorePath,
+        stdio: 'inherit',
+        timeout: 30000
+      });
+    } catch (e) {
+      // gateway start may exit after daemonizing, which throws - that's OK
+    }
+    
+    // Wait for startup
+    console.log(c('dim', '\n   Waiting for gateway to start...'));
+    await new Promise(r => setTimeout(r, 5000));
     
     // Check status
     try {
       const status = execSync('clawdbot gateway status', { 
         cwd: config.wallet.keystorePath,
         encoding: 'utf8',
-        timeout: 5000
+        timeout: 10000
       });
-      if (status.includes('running') || status.includes('online')) {
-        console.log(c('green', '✅ Gateway is running!'));
+      
+      if (status.toLowerCase().includes('running') || 
+          status.toLowerCase().includes('online') ||
+          status.toLowerCase().includes('started')) {
+        console.log(c('green', '\n✅ Gateway is running!'));
+        console.log(c('dim', status.trim()));
         return true;
+      } else {
+        console.log(c('yellow', '\n⚠️  Gateway status unclear:'));
+        console.log(c('dim', status.trim()));
       }
-    } catch (e) {}
+    } catch (statusErr) {
+      console.log(c('yellow', '\n⚠️  Could not verify gateway status'));
+    }
     
-    // Alternative: check if process is running
-    console.log(c('green', '✅ Gateway started'));
+    // Even if status check failed, gateway might be running
     return true;
     
   } catch (e) {
-    console.log(c('yellow', `⚠️  Could not auto-start gateway: ${e.message}`));
-    console.log(c('dim', '\nStart manually:'));
-    console.log(c('dim', `   cd ${config.wallet.keystorePath}`));
-    console.log(c('dim', '   clawdbot gateway start'));
+    console.log(c('yellow', `\n⚠️  Could not auto-start gateway: ${e.message}`));
+    console.log(`
+${c('bright', 'Start your agent manually:')}
+
+   ${c('cyan', `cd ${config.wallet.keystorePath}`)}
+   ${c('cyan', 'clawdbot gateway start')}
+`);
     return false;
   }
 }
@@ -733,6 +752,10 @@ This enables your agent to receive tips via x402!
   
   console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Step 2: Post Verification to m/payments')} ${c('cyan', '━━━')}\n`);
   
+  // Check if account needs to be claimed first
+  let needsClaim = false;
+  let postUrl = null;
+  
   const proofContent = `# 🤖 Agent Onboarding: ${config.agent.name}
 
 **Wallet Address:** \`${config.wallet.evmAddress}\`
@@ -754,7 +777,6 @@ This post serves as proof of onboarding for agent whitelisting.
 
   console.log('📝 Posting verification to m/payments...\n');
   
-  let postUrl = null;
   try {
     const postResponse = await fetch('https://www.moltbook.com/api/v1/posts', {
       method: 'POST',
@@ -778,11 +800,33 @@ This post serves as proof of onboarding for agent whitelisting.
         console.log(`   ${c('cyan', postUrl)}`);
       }
     } else {
-      const errorText = await postResponse.text();
-      console.log(c('yellow', `⚠️  Could not post: ${errorText}`));
+      const errorData = await postResponse.json().catch(() => ({}));
+      if (errorData.error?.includes('claimed') || errorData.hint?.includes('claim')) {
+        needsClaim = true;
+        console.log(c('yellow', '⚠️  Moltbook account needs to be claimed first'));
+        console.log(c('dim', '   Your human needs to verify the account before you can post.'));
+        if (claimUrl) {
+          console.log(`\n   ${c('bright', 'Claim URL:')} ${c('cyan', claimUrl)}`);
+        }
+        console.log(c('dim', '\n   After claiming, your agent can post to m/payments automatically.'));
+      } else {
+        console.log(c('yellow', `⚠️  Could not post: ${errorData.error || 'Unknown error'}`));
+      }
     }
   } catch (e) {
     console.log(c('yellow', `⚠️  Network error posting to Moltbook: ${e.message}`));
+  }
+  
+  // Save the post content so agent can post it later after claiming
+  if (needsClaim) {
+    const pendingPostPath = path.join(config.wallet.keystorePath, 'pending-moltbook-post.json');
+    fs.writeFileSync(pendingPostPath, JSON.stringify({
+      submolt: 'payments',
+      title: `🤖 Agent Onboarding: ${config.agent.name}`,
+      content: proofContent,
+      note: 'Post this to m/payments after your Moltbook account is claimed'
+    }, null, 2));
+    console.log(c('green', `\n✅ Saved: pending-moltbook-post.json (post after claiming)`));
   }
   
   console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Step 3: Follow @CanddaoJr')} ${c('cyan', '━━━')}\n`);
@@ -942,16 +986,24 @@ workspace: "."
 }
 
 function printFinalInstructions(config, agentStarted = false) {
+  // Moltbook claim reminder if applicable
+  const moltbookClaim = config.moltbook?.claimUrl ? `
+${c('yellow', '📋 REMINDER: Claim your Moltbook account!')}
+   Send this link to your human to verify:
+   ${c('cyan', config.moltbook.claimUrl)}
+   After claiming, your agent can post to m/payments.
+` : '';
+
   if (agentStarted) {
     console.log(`
 ${c('cyan', '╔══════════════════════════════════════════════════════════════╗')}
-${c('cyan', '║')}            ${c('green', '🎉 Your Agent is LIVE!')}                          ${c('cyan', '║')}
+${c('cyan', '║')}            ${c('green', '🎉 Setup Complete!')}                               ${c('cyan', '║')}
 ${c('cyan', '╚══════════════════════════════════════════════════════════════╝')}
 
 ${c('bright', '💬 Message your bot now!')}
    ${config.channels.telegram ? `Telegram: Search for your bot and send /start` : ''}
    ${config.channels.discord ? `Discord: Invite your bot and mention it` : ''}
-
+${moltbookClaim}
 ${c('bright', '📁 Your Files:')}
    ${config.wallet.keystorePath}/
    ├── config.yaml          ${c('dim', '← Clawdbot config')}
@@ -970,14 +1022,14 @@ ${c('bright', '📚 Resources:')}
    • Tips: https://agent-tips.vercel.app
 
 ${c('dim', '─────────────────────────────────────────────────────────────────')}
-${c('green', `✨ Agent "${config.agent.name}" is running! Go chat with it! ✨`)}
+${c('green', `✨ Agent "${config.agent.name}" setup complete! ✨`)}
 `);
   } else {
     console.log(`
 ${c('cyan', '╔══════════════════════════════════════════════════════════════╗')}
 ${c('cyan', '║')}                  ${c('green', '✅ Setup Complete!')}                         ${c('cyan', '║')}
 ${c('cyan', '╚══════════════════════════════════════════════════════════════╝')}
-
+${moltbookClaim}
 ${c('bright', '📁 Your Files:')}
    ${config.wallet.keystorePath}/
    ├── config.yaml          ${c('dim', '← Clawdbot config')}
@@ -985,13 +1037,12 @@ ${c('bright', '📁 Your Files:')}
    └── *-keystore.json      ${c('dim', '← Wallet files')}
 
 ${c('bright', '🚀 Start your agent:')}
-   cd ${config.wallet.keystorePath}
-   clawdbot gateway start
+   ${c('cyan', `cd ${config.wallet.keystorePath}`)}
+   ${c('cyan', 'clawdbot gateway start')}
 
 ${c('bright', '📚 Resources:')}
    • Docs: https://docs.clawd.bot
    • Tips: https://agent-tips.vercel.app
-   • GitHub: github.com/canddao1-dotcom/x402-flare-facilitator
 
 ${c('dim', '─────────────────────────────────────────────────────────────────')}
 ${c('dim', `Agent "${config.agent.name}" is ready! Happy building 🤖`)}
