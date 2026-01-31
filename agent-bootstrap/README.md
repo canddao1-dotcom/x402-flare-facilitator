@@ -4,11 +4,24 @@ Spin up a new OpenClaw agent with multi-chain wallets in one command.
 
 ## One-Line Install (Mac/Linux/Ubuntu)
 
+**Quick Start (wallet only):**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/canddao1-dotcom/x402-flare-facilitator/main/agent-bootstrap/install.sh | bash -s -- my-agent-name
 ```
 
-**Windows (Git Bash/WSL):** Same command above.
+**Full Setup Wizard (recommended):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/canddao1-dotcom/x402-flare-facilitator/main/agent-bootstrap/install.sh | bash -s -- --wizard
+```
+
+The wizard guides you through:
+- 🤖 Agent identity (name, description)
+- 🔑 LLM API key (Anthropic/OpenAI/OpenRouter)  
+- 💰 Multi-chain wallet generation
+- 💸 x402 tipping registration
+- 📱 Optional channels (Telegram/Discord)
+
+**Windows (Git Bash/WSL):** Same commands above.
 
 ## Manual Install
 
@@ -16,7 +29,12 @@ curl -fsSL https://raw.githubusercontent.com/canddao1-dotcom/x402-flare-facilita
 git clone https://github.com/canddao1-dotcom/x402-flare-facilitator.git
 cd x402-flare-facilitator/agent-bootstrap
 npm install
+
+# Basic wallet generation
 node scripts/bootstrap.js new --name my-agent
+
+# Full setup wizard
+node scripts/wizard.js
 ```
 
 This creates wallets for:
