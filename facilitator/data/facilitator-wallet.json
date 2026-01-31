@@ -1,0 +1,8 @@
+{
+  "name": "x402 Facilitator Wallet",
+  "purpose": "ONLY for x402 payment facilitator - NOT agent main wallet",
+  "address": "0xCFF4F49EACe68b26bD964113eEF9f60B4d56B626",
+  "privateKey": "***REMOVED***",
+  "created": "2026-01-30T22:21:00Z",
+  "network": "flare"
+}

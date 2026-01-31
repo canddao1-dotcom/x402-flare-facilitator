@@ -1,0 +1,14 @@
+{
+  "name": "wallet-gen",
+  "version": "1.0.0",
+  "description": "EVM wallet generation and management for AI agents",
+  "type": "module",
+  "scripts": {
+    "gen": "node scripts/wallet.js gen",
+    "show": "node scripts/wallet.js show",
+    "list": "node scripts/wallet.js list"
+  },
+  "dependencies": {
+    "viem": "^2.0.0"
+  }
+}
