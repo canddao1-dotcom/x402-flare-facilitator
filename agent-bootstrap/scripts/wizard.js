@@ -687,8 +687,34 @@ async function installAndStartAgent(config) {
     // Change to agent directory
     process.chdir(config.wallet.keystorePath);
     
-    // Start gateway and capture output
-    console.log(c('dim', '   Running: openclaw gateway start\n'));
+    // Install gateway service first
+    console.log(c('dim', '   Running: openclaw gateway install\n'));
+    try {
+      execSync('openclaw gateway install', {
+        cwd: config.wallet.keystorePath,
+        stdio: 'inherit',
+        timeout: 30000,
+        env: process.env
+      });
+    } catch (e) {
+      // May already be installed, continue
+    }
+    
+    // Run doctor --fix to apply any config changes
+    console.log(c('dim', '\n   Running: openclaw doctor --fix\n'));
+    try {
+      execSync('openclaw doctor --fix', {
+        cwd: config.wallet.keystorePath,
+        stdio: 'inherit',
+        timeout: 30000,
+        env: process.env
+      });
+    } catch (e) {
+      // Doctor may have interactive prompts or non-zero exit, continue
+    }
+    
+    // Start gateway
+    console.log(c('dim', '\n   Running: openclaw gateway start\n'));
     
     try {
       // Try to start with visible output
