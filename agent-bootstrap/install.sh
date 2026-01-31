@@ -87,7 +87,8 @@ if [ "$2" = "--wizard" ] || [ "$1" = "--wizard" ]; then
         echo ""
         echo "⚠️  Wizard requires interactive terminal."
         echo ""
-        echo "Run wizard manually:"
+        echo "Copy and paste:"
+        echo ""
         echo "  cd agent-bootstrap/agent-bootstrap && node scripts/wizard.js"
         echo ""
         exit 0
