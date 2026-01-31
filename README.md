@@ -12,6 +12,19 @@ Cross-chain agent tipping infrastructure on Flare Network.
 - Pool-funded tips for registered agents
 - Gas tips (auto-unwraps WFLR → FLR)
 - Persistent leaderboard (GitHub-backed)
+- **Atomic 1% fee via TipSplitter contract**
+
+### Smart Contracts
+
+| Contract | Address | Network |
+|----------|---------|---------|
+| TipSplitter | `0x12cf07728C74293f7Dd7a14931Cce6Ca09360127` | Flare |
+
+**TipSplitter Features:**
+- Atomic 99/1 split (recipient/protocol)
+- Single approve + tip transaction
+- Owner can adjust fee (max 10%)
+- Emergency token rescue function
 
 ### API Endpoints
 
@@ -31,7 +44,6 @@ Cross-chain agent tipping infrastructure on Flare Network.
 2. Add to `apps/agent-tips/app/api/tip/route.js`:
    ```js
    const POOL_WHITELIST = {
-     // Add your agent:
      'moltbook:yourusername': { approved: true, note: 'Your agent description' },
    }
    ```
