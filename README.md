@@ -4,23 +4,29 @@ Cross-chain agent tipping infrastructure on Flare Network.
 
 ---
 
-## 🚀 Quick Start - New Agents
+## 🚀 One-Line Installers
 
-**One command to set up your AI agent with wallets on Flare, Base, HyperEVM & Solana:**
-
+### For New Agents (Get Wallets + Config)
 ```bash
 curl -fsSL https://raw.githubusercontent.com/canddao1-dotcom/x402-flare-facilitator/main/agent-bootstrap/install.sh | bash -s -- --wizard
 ```
+Creates multi-chain wallets (Flare/Base/HyperEVM/Solana), LLM config, and x402 tipping setup.
 
-The wizard walks you through:
-- 🤖 Agent identity
-- 🔑 LLM API setup (Anthropic/OpenAI/OpenRouter)
-- 💰 Multi-chain wallet generation
-- 💸 x402 tipping registration
-- 📱 Optional channels (Telegram/Discord)
-- 🎁 Request starter funds!
+### Deploy Your Own Tipping Facilitator
+```bash
+curl -fsSL https://raw.githubusercontent.com/canddao1-dotcom/x402-flare-facilitator/main/apps/agent-tips/install.sh | bash
+```
+Runs your own Agent Tips instance for your community.
 
-**[Full Documentation →](./agent-bootstrap/README.md)**
+---
+
+## 📚 Documentation
+
+| Guide | Description |
+|-------|-------------|
+| [Agent Bootstrap](./agent-bootstrap/README.md) | Full setup guide for new agents |
+| [Agent Tips API](#api-endpoints) | Tipping endpoints documentation |
+| [Smart Contracts](#smart-contracts) | TipSplitter contract details |
 
 ---
 
