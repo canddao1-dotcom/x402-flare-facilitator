@@ -687,67 +687,83 @@ async function installAndStartAgent(config) {
     // Change to agent directory
     process.chdir(config.wallet.keystorePath);
     
-    // Configure OpenClaw with our settings
+    // Configure OpenClaw directly by editing its config file
     console.log(c('dim', '   Configuring OpenClaw...\n'));
     
-    // Set gateway mode to local (required by OpenClaw)
-    try {
-      execSync('openclaw config set gateway.mode local', {
-        stdio: 'pipe', timeout: 10000, env: process.env
-      });
-      console.log(c('green', '   ✓ gateway.mode=local'));
-    } catch (e) {}
+    const openclawConfigPath = path.join(homeDir, '.openclaw', 'openclaw.json');
+    let openclawConfig = {};
     
-    // Set API key based on provider
+    // Read existing config if it exists
+    try {
+      if (fs.existsSync(openclawConfigPath)) {
+        openclawConfig = JSON.parse(fs.readFileSync(openclawConfigPath, 'utf8'));
+      }
+    } catch (e) {
+      openclawConfig = {};
+    }
+    
+    // Ensure directories exist
+    const openclawDir = path.join(homeDir, '.openclaw');
+    if (!fs.existsSync(openclawDir)) {
+      fs.mkdirSync(openclawDir, { recursive: true });
+    }
+    
+    // Set gateway mode
+    if (!openclawConfig.gateway) openclawConfig.gateway = {};
+    openclawConfig.gateway.mode = 'local';
+    console.log(c('green', '   ✓ gateway.mode=local'));
+    
+    // Set provider/API key
     if (config.llm.apiKey) {
-      try {
-        if (config.llm.provider === 'anthropic') {
-          execSync(`openclaw config set provider.anthropic.apiKey "${config.llm.apiKey}"`, {
-            stdio: 'pipe', timeout: 10000, env: process.env
-          });
-          console.log(c('green', '   ✓ Anthropic API key'));
-        } else if (config.llm.provider === 'openai') {
-          execSync(`openclaw config set provider.openai.apiKey "${config.llm.apiKey}"`, {
-            stdio: 'pipe', timeout: 10000, env: process.env
-          });
-          console.log(c('green', '   ✓ OpenAI API key'));
-        } else if (config.llm.provider === 'openrouter') {
-          execSync(`openclaw config set provider.openrouter.apiKey "${config.llm.apiKey}"`, {
-            stdio: 'pipe', timeout: 10000, env: process.env
-          });
-          console.log(c('green', '   ✓ OpenRouter API key'));
-        }
-      } catch (e) {}
+      if (!openclawConfig.provider) openclawConfig.provider = {};
+      if (config.llm.provider === 'anthropic') {
+        if (!openclawConfig.provider.anthropic) openclawConfig.provider.anthropic = {};
+        openclawConfig.provider.anthropic.apiKey = config.llm.apiKey;
+        console.log(c('green', '   ✓ Anthropic API key'));
+      } else if (config.llm.provider === 'openai') {
+        if (!openclawConfig.provider.openai) openclawConfig.provider.openai = {};
+        openclawConfig.provider.openai.apiKey = config.llm.apiKey;
+        console.log(c('green', '   ✓ OpenAI API key'));
+      } else if (config.llm.provider === 'openrouter') {
+        if (!openclawConfig.provider.openrouter) openclawConfig.provider.openrouter = {};
+        openclawConfig.provider.openrouter.apiKey = config.llm.apiKey;
+        console.log(c('green', '   ✓ OpenRouter API key'));
+      }
     }
     
     // Set model
     if (config.llm.model) {
-      try {
-        execSync(`openclaw config set model "${config.llm.model}"`, {
-          stdio: 'pipe', timeout: 10000, env: process.env
-        });
-        console.log(c('green', '   ✓ Model: ' + config.llm.model));
-      } catch (e) {}
+      openclawConfig.model = config.llm.model;
+      console.log(c('green', '   ✓ Model: ' + config.llm.model));
     }
     
-    // Set Telegram token
+    // Set channels
+    if (!openclawConfig.channels) openclawConfig.channels = {};
+    
+    // Set Telegram
     if (config.channels.telegram?.token) {
-      try {
-        execSync(`openclaw config set channels.telegram.token "${config.channels.telegram.token}"`, {
-          stdio: 'pipe', timeout: 10000, env: process.env
-        });
-        console.log(c('green', '   ✓ Telegram configured'));
-      } catch (e) {}
+      openclawConfig.channels.telegram = {
+        enabled: true,
+        token: config.channels.telegram.token
+      };
+      console.log(c('green', '   ✓ Telegram configured'));
     }
     
-    // Set Discord token
+    // Set Discord
     if (config.channels.discord?.token) {
-      try {
-        execSync(`openclaw config set channels.discord.token "${config.channels.discord.token}"`, {
-          stdio: 'pipe', timeout: 10000, env: process.env
-        });
-        console.log(c('green', '   ✓ Discord configured'));
-      } catch (e) {}
+      openclawConfig.channels.discord = {
+        enabled: true,
+        token: config.channels.discord.token
+      };
+      console.log(c('green', '   ✓ Discord configured'));
+    }
+    
+    // Write config
+    try {
+      fs.writeFileSync(openclawConfigPath, JSON.stringify(openclawConfig, null, 2));
+      console.log(c('green', `   ✓ Saved: ${openclawConfigPath}`));
+    } catch (e) {
+      console.log(c('yellow', `   ⚠️ Could not write config: ${e.message}`));
     }
     
     console.log('');
