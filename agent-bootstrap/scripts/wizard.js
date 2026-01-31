@@ -205,12 +205,29 @@ async function runWizard() {
     async () => {
       printSection(1, 'Agent Identity');
       
+      console.log(c('dim', 'Agent name requirements: 3-20 characters, letters/numbers/underscores only\n'));
+      
       const name = await ask(`${c('green', '?')} Agent name (e.g., "TradingBot")`);
       if (name === BACK) return BACK;
       if (!name) {
         console.log(c('red', '   Agent name is required'));
         return false; // Retry this step
       }
+      
+      // Validate agent name for Moltbook compatibility
+      if (name.length < 3) {
+        console.log(c('red', '   Agent name must be at least 3 characters'));
+        return false;
+      }
+      if (name.length > 20) {
+        console.log(c('red', '   Agent name must be 20 characters or less'));
+        return false;
+      }
+      if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(name)) {
+        console.log(c('red', '   Agent name must start with a letter and contain only letters, numbers, underscores'));
+        return false;
+      }
+      
       config.agent.name = name;
       
       const desc = await ask(
