@@ -32,6 +32,23 @@ export default function Leaderboard() {
         return agent;
       });
       
+      // Token prices for USD calculation (updated 2026-01-31 from FTSO)
+      const TOKEN_PRICES = {
+        'USDT': 1.0, 'USDC': 1.0,
+        'WFLR': 0.0095, 'FLR': 0.0095,
+        'FXRP': 1.65, 'XRP': 1.65,
+        'HYPE': 20,
+      };
+      
+      // Calculate USD from byToken object
+      const calcUSD = (byToken) => {
+        if (!byToken) return 0;
+        return Object.entries(byToken).reduce((sum, [token, amount]) => {
+          const price = TOKEN_PRICES[token.toUpperCase()] || 1.0;
+          return sum + (amount * price);
+        }, 0);
+      };
+      
       // Add human wallets that have sent tips (not in whitelist)
       const existingAgentKeys = new Set(mergedTopRecipients.map(a => a.agent));
       const humanWallets = Object.entries(reportByAgent)
@@ -40,10 +57,10 @@ export default function Leaderboard() {
           agent: key,
           platform: 'wallet',
           username: key.split(':')[1], // e.g., "0x3c1c8413"
-          note: 'Human wallet',
+          note: 'Generous human 🙏',
           tipsSent: stats.sent || 0,
           tipsReceived: stats.received || 0,
-          amountSent: (stats.sentAmount || 0).toFixed(2),
+          amountSent: calcUSD(stats.byToken).toFixed(2),
           amountReceived: (stats.receivedAmount || 0).toFixed(2),
           isHuman: true
         }));
