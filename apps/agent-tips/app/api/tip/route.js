@@ -1,23 +1,33 @@
 import { NextResponse } from 'next/server'
-import { sendTip, resolveAgentWallet, CHAINS, getSupportedAssets } from '../../../lib/x402.js'
+import { sendTip, resolveAgentWallet, CHAINS, getSupportedAssets, PROTOCOL_FEE } from '../../../lib/x402.js'
 
 // Load facilitator key from environment
 function getFacilitatorKey() {
   return process.env.FACILITATOR_PRIVATE_KEY || null;
 }
 
-// Whitelisted agents who can use pool-funded tips
+// Pool tip limits
+const POOL_LIMITS = {
+  maxTipUSD: 1.00, // Max 1 USDT equivalent per tip
+  maxDailyTips: 10, // Max tips per agent per day
+};
+
+// Whitelisted agents who can use pool-funded tips (send AND receive)
 // Register at: https://github.com/canddao1-dotcom/x402-flare-facilitator
 const POOL_WHITELIST = {
-  // Format: 'platform:username_lowercase': { approved: true, maxDaily: 10 }
+  // Format: 'platform:username_lowercase': { approved: true, note: '...' }
   'moltbook:canddaojr': { approved: true, note: 'CanddaoJr - FlareBank agent' },
-  'moltbook:starclawd': { approved: true, note: 'Starclawd' },
   // Add more via PR to the repo
 };
 
 function isWhitelisted(platform, username) {
   const key = `${platform}:${username.toLowerCase()}`;
   return POOL_WHITELIST[key]?.approved === true;
+}
+
+function getWhitelistEntry(platform, username) {
+  const key = `${platform}:${username.toLowerCase()}`;
+  return POOL_WHITELIST[key] || null;
 }
 
 // Tips logging
@@ -55,7 +65,7 @@ export async function POST(request) {
       )
     }
 
-    // Pool mode whitelist check
+    // Pool mode whitelist check (both sender AND receiver must be whitelisted)
     if (mode === 'pool') {
       if (!senderAgent) {
         return NextResponse.json({
@@ -66,13 +76,32 @@ export async function POST(request) {
         }, { status: 403 })
       }
       
-      if (!isWhitelisted('moltbook', senderAgent)) {
+      // Check sender is whitelisted
+      if (!isWhitelisted(platform, senderAgent)) {
         return NextResponse.json({
           error: `Agent '${senderAgent}' is not registered for pool tips`,
           message: 'Register your agent at our GitHub repo to use pool-funded tips.',
           registrationUrl: 'https://github.com/canddao1-dotcom/x402-flare-facilitator#agent-registration',
           agentsOnly: true
         }, { status: 403 })
+      }
+      
+      // Check receiver is whitelisted
+      if (!isWhitelisted(platform, username)) {
+        return NextResponse.json({
+          error: `Agent '${username}' is not registered to receive pool tips`,
+          message: 'Only whitelisted agents can receive pool-funded tips. The recipient needs to register.',
+          registrationUrl: 'https://github.com/canddao1-dotcom/x402-flare-facilitator#agent-registration',
+        }, { status: 403 })
+      }
+      
+      // Check amount limit (1 USDT max for pool tips)
+      if (tipAmount > POOL_LIMITS.maxTipUSD) {
+        return NextResponse.json({
+          error: `Pool tip amount exceeds limit`,
+          message: `Maximum pool tip is ${POOL_LIMITS.maxTipUSD} USDT. Use wallet mode for larger tips.`,
+          limit: POOL_LIMITS.maxTipUSD
+        }, { status: 400 })
       }
     }
 
@@ -117,17 +146,21 @@ export async function POST(request) {
       timestamp: new Date().toISOString()
     });
 
-    console.log(`💰 [Agent Tips] ${amount} ${token} on ${chain} → ${username} (${recipientWallet}) tx: ${result.txHash}`);
+    console.log(`💰 [Agent Tips] ${result.amount} ${token} (fee: ${result.fee}) on ${chain} → ${username} (${recipientWallet}) tx: ${result.txHash}`);
 
     return NextResponse.json({
       success: true,
       txHash: result.txHash,
+      feeTxHash: result.feeTxHash,
       recipient: recipientWallet,
-      amount: amount,
+      amount: result.amount,
+      fee: result.fee,
+      totalAmount: amount,
       token: token,
       chain: chain,
       explorer: result.explorer,
-      message: `Tipped ${amount} ${token} to ${username} on ${CHAINS[chain].name}!`
+      feeExplorer: result.feeExplorer,
+      message: `Tipped ${result.amount} ${token} to ${username} (${PROTOCOL_FEE.percent}% fee: ${result.fee} ${token})`
     })
 
   } catch (error) {

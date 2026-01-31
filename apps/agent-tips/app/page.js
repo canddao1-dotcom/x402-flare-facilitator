@@ -42,6 +42,12 @@ const ERC20_ABI = [
 
 const percentOptions = [1, 10, 50, 100]
 
+// Protocol fee
+const PROTOCOL_FEE = {
+  percent: 1,
+  recipient: '0x0DFa93560e0DCfF78F7e3985826e42e53E9493cC' // CanddaoJr
+}
+
 export default function AgentTips() {
   const [selectedPlatform, setSelectedPlatform] = useState('moltbook')
   const [selectedChain, setSelectedChain] = useState('flare')
@@ -97,8 +103,14 @@ export default function AgentTips() {
       
       const recipientAddress = resolveData.address
       
-      if (tipMode === 'wallet' && isConnected) {
-        // Wallet-funded tip - user pays directly
+      // Wallet mode - user pays directly from their wallet
+      if (tipMode === 'wallet') {
+        if (!isConnected) {
+          setError('Connect your wallet first to send tips')
+          setLoading(false)
+          return
+        }
+        
         const tokenInfo = TOKEN_ADDRESSES[selectedChain]?.[selectedToken]
         if (!tokenInfo) {
           setError(`Token ${selectedToken} not available on ${selectedChain}`)
@@ -106,7 +118,13 @@ export default function AgentTips() {
           return
         }
         
-        const amount = parseUnits(tipAmount, tokenInfo.decimals)
+        // Calculate fee (1%) and net amount (99%)
+        const totalAmount = parseFloat(tipAmount)
+        const feeAmount = totalAmount * (PROTOCOL_FEE.percent / 100)
+        const netAmount = totalAmount - feeAmount
+        
+        const netAmountBigInt = parseUnits(netAmount.toFixed(tokenInfo.decimals), tokenInfo.decimals)
+        const feeAmountBigInt = parseUnits(feeAmount.toFixed(tokenInfo.decimals), tokenInfo.decimals)
         
         if (tokenInfo.address === 'native') {
           // Native token transfer (HYPE)
@@ -116,19 +134,29 @@ export default function AgentTips() {
           return
         }
         
-        // ERC20 transfer
+        // ERC20 transfer to recipient (99%)
         const hash = await writeContractAsync({
           address: tokenInfo.address,
           abi: ERC20_ABI,
           functionName: 'transfer',
-          args: [recipientAddress, amount],
+          args: [recipientAddress, netAmountBigInt],
         })
+        
+        // ERC20 transfer fee (1%)
+        if (feeAmountBigInt > 0n) {
+          await writeContractAsync({
+            address: tokenInfo.address,
+            abi: ERC20_ABI,
+            functionName: 'transfer',
+            args: [PROTOCOL_FEE.recipient, feeAmountBigInt],
+          })
+        }
         
         setTxHash(hash)
         setSaved(true)
         setTimeout(() => setSaved(false), 5000)
         
-      } else {
+      } else if (tipMode === 'pool') {
         // Pool-funded tip - only for registered agents
         const response = await fetch('/api/tip', {
           method: 'POST',
@@ -372,6 +400,11 @@ export default function AgentTips() {
             </a>
           </div>
         )}
+
+        {/* Fee info */}
+        <div style={styles.feeInfo}>
+          💡 {PROTOCOL_FEE.percent}% protocol fee ({(parseFloat(tipAmount || 0) * PROTOCOL_FEE.percent / 100).toFixed(2)} {selectedToken})
+        </div>
 
         {/* Save button */}
         <button 
@@ -670,6 +703,15 @@ const styles = {
   saveBtnDisabled: {
     backgroundColor: '#444',
     cursor: 'not-allowed',
+  },
+  feeInfo: {
+    fontSize: '11px',
+    color: '#888',
+    textAlign: 'center',
+    marginBottom: '12px',
+    padding: '6px',
+    backgroundColor: '#222',
+    borderRadius: '4px',
   },
   error: {
     color: '#ff4444',

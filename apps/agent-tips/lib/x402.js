@@ -85,6 +85,13 @@ const ERC20_ABI = parseAbi([
   'function decimals() view returns (uint8)'
 ]);
 
+// Protocol fee configuration
+export const PROTOCOL_FEE = {
+  percent: 1, // 1% fee
+  recipient: '0x0DFa93560e0DCfF78F7e3985826e42e53E9493cC', // CanddaoJr agent wallet
+  description: 'Protocol fee for agent infrastructure'
+};
+
 // Create client for a specific chain
 function getPublicClient(chain = 'flare') {
   const chainConfig = CHAINS[chain];
@@ -109,15 +116,16 @@ function getWalletClient(privateKey, chain = 'flare') {
 }
 
 /**
- * Send tip from facilitator wallet
+ * Send tip from facilitator wallet with 1% protocol fee
  * @param {Object} params
  * @param {string} params.to - Recipient address
- * @param {string} params.amount - Amount to send
+ * @param {string} params.amount - Amount to send (total, fee deducted from this)
  * @param {string} params.token - Token symbol (USDT, WFLR, FXRP, HYPE)
  * @param {string} params.chain - Chain name (flare, hyperevm)
  * @param {string} params.privateKey - Facilitator private key
+ * @param {boolean} params.skipFee - Skip fee for special cases (default false)
  */
-export async function sendTip({ to, amount, token = 'USDT', chain = 'flare', privateKey }) {
+export async function sendTip({ to, amount, token = 'USDT', chain = 'flare', privateKey, skipFee = false }) {
   if (!privateKey) {
     throw new Error('Facilitator private key required');
   }
@@ -142,19 +150,14 @@ export async function sendTip({ to, amount, token = 'USDT', chain = 'flare', pri
   const walletClient = getWalletClient(privateKey, chain);
   
   // Parse amount to token decimals
-  const amountBigInt = BigInt(Math.floor(parseFloat(amount) * (10 ** tokenConfig.decimals)));
+  const totalAmountBigInt = BigInt(Math.floor(parseFloat(amount) * (10 ** tokenConfig.decimals)));
   
-  let hash;
+  // Calculate fee (1%) and net amount (99%)
+  const feeAmountBigInt = skipFee ? 0n : totalAmountBigInt / 100n;
+  const netAmountBigInt = totalAmountBigInt - feeAmountBigInt;
   
-  if (tokenConfig.address === 'native') {
-    // Native token transfer (HYPE on HyperEVM)
-    hash = await walletClient.sendTransaction({
-      to,
-      value: amountBigInt
-    });
-  } else {
-    // ERC20 transfer
-    // Check balance first
+  // Check balance (need total amount)
+  if (tokenConfig.address !== 'native') {
     const balance = await publicClient.readContract({
       address: tokenConfig.address,
       abi: ERC20_ABI,
@@ -162,31 +165,67 @@ export async function sendTip({ to, amount, token = 'USDT', chain = 'flare', pri
       args: [account.address]
     });
     
-    if (balance < amountBigInt) {
+    if (balance < totalAmountBigInt) {
       throw new Error(`Insufficient ${token} balance on ${chain}. Have: ${Number(balance) / (10 ** tokenConfig.decimals)}, Need: ${amount}`);
     }
+  }
+  
+  let hash, feeHash;
+  
+  if (tokenConfig.address === 'native') {
+    // Native token transfer (HYPE on HyperEVM)
+    hash = await walletClient.sendTransaction({
+      to,
+      value: netAmountBigInt
+    });
     
-    // Execute transfer
+    // Send fee
+    if (feeAmountBigInt > 0n) {
+      feeHash = await walletClient.sendTransaction({
+        to: PROTOCOL_FEE.recipient,
+        value: feeAmountBigInt
+      });
+    }
+  } else {
+    // ERC20 transfers
+    // Send to recipient (99%)
     hash = await walletClient.writeContract({
       address: tokenConfig.address,
       abi: ERC20_ABI,
       functionName: 'transfer',
-      args: [to, amountBigInt]
+      args: [to, netAmountBigInt]
     });
+    
+    // Send fee (1%)
+    if (feeAmountBigInt > 0n) {
+      feeHash = await walletClient.writeContract({
+        address: tokenConfig.address,
+        abi: ERC20_ABI,
+        functionName: 'transfer',
+        args: [PROTOCOL_FEE.recipient, feeAmountBigInt]
+      });
+    }
   }
   
-  // Wait for confirmation
+  // Wait for main tx confirmation
   const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  
+  const feeAmount = Number(feeAmountBigInt) / (10 ** tokenConfig.decimals);
+  const netAmount = Number(netAmountBigInt) / (10 ** tokenConfig.decimals);
   
   return {
     success: true,
     txHash: hash,
+    feeTxHash: feeHash || null,
     from: account.address,
     to,
-    amount,
+    amount: netAmount.toFixed(tokenConfig.decimals <= 6 ? tokenConfig.decimals : 6),
+    fee: feeAmount.toFixed(tokenConfig.decimals <= 6 ? tokenConfig.decimals : 6),
+    totalAmount: amount,
     token,
     chain,
     explorer: `${chainConfig.explorer}/tx/${hash}`,
+    feeExplorer: feeHash ? `${chainConfig.explorer}/tx/${feeHash}` : null,
     blockNumber: receipt.blockNumber.toString()
   };
 }
