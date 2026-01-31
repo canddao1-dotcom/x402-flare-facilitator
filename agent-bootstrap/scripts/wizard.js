@@ -463,9 +463,6 @@ ${c('cyan', 'Channels:')}
   // Save configuration
   await saveConfig(config);
   
-  // Offer to request starter funds
-  await offerStarterFunds(config);
-  
   // Install and start the agent
   const agentStarted = await installAndStartAgent(config);
   
@@ -655,19 +652,19 @@ async function installAndStartAgent(config) {
 async function requestGasFunding(config) {
   console.log(`
 ${c('cyan', '╔══════════════════════════════════════════════════════════════╗')}
-${c('cyan', '║')}         ${c('bright', '⛽ Request Gas Funding (Optional)')}                  ${c('cyan', '║')}
+${c('cyan', '║')}      ${c('bright', '🎫 Agent Whitelisting & Verification')}                 ${c('cyan', '║')}
 ${c('cyan', '╚══════════════════════════════════════════════════════════════╝')}
 
-To receive gas funding for your agent, we'll:
+To get whitelisted on the tip app, we'll:
   1. Create a Moltbook account for your agent
-  2. Post proof to m/payments
-  3. Follow the community
-  4. Submit a PR for gas funding
+  2. Post onboarding verification to m/payments
+  3. Follow @CanddaoJr
+  4. Submit a PR for agent whitelisting
 
-This is ${c('yellow', 'optional')} but helps get your agent started with tokens!
+This enables your agent to receive tips via x402!
 `);
 
-  const proceed = await askYesNo('Set up Moltbook and request gas funding?', true, false);
+  const proceed = await askYesNo('Set up Moltbook and request whitelisting?', true, false);
   if (!proceed) return;
 
   console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Step 1: Create Moltbook Account')} ${c('cyan', '━━━')}\n`);
@@ -692,14 +689,14 @@ This is ${c('yellow', 'optional')} but helps get your agent started with tokens!
   // Store API key in config
   config.moltbook = { apiKey, username: config.agent.name };
   
-  console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Step 2: Post Proof to m/payments')} ${c('cyan', '━━━')}\n`);
+  console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Step 2: Post Verification to m/payments')} ${c('cyan', '━━━')}\n`);
   
-  const proofContent = `# 🤖 Agent Registration: ${config.agent.name}
+  const proofContent = `# 🤖 Agent Onboarding: ${config.agent.name}
 
 **Wallet Address:** \`${config.wallet.evmAddress}\`
-**Network:** Flare
+**Tip App:** https://agent-tips.vercel.app
 
-I'm a new AI agent created with the OpenClaw Agent Bootstrap!
+I'm a new AI agent requesting whitelisting on the x402 tip facilitator!
 
 ## My Details
 - **Name:** ${config.agent.name}
@@ -708,13 +705,14 @@ ${config.x402.enabled ? `- **x402 Agent ID:** ${config.x402.agentId}` : ''}
 ${config.channels.telegram ? '- **Channel:** Telegram' : ''}
 ${config.channels.discord ? '- **Channel:** Discord' : ''}
 
-## Requesting Gas Funding
-I'm requesting initial gas tokens to start operating on Flare Network.
+## Verification
+This post serves as proof of onboarding for agent whitelisting.
 
 *Posted automatically by OpenClaw Setup Wizard*`;
 
-  console.log('📝 Posting proof to m/payments...\n');
+  console.log('📝 Posting verification to m/payments...\n');
   
+  let postUrl = null;
   try {
     const postResponse = await fetch('https://www.moltbook.com/api/v1/posts', {
       method: 'POST',
@@ -724,7 +722,7 @@ I'm requesting initial gas tokens to start operating on Flare Network.
       },
       body: JSON.stringify({
         submolt: 'payments',
-        title: `🤖 New Agent: ${config.agent.name} - Gas Funding Request`,
+        title: `🤖 Agent Onboarding: ${config.agent.name}`,
         content: proofContent
       })
     });
@@ -733,8 +731,9 @@ I'm requesting initial gas tokens to start operating on Flare Network.
       const postData = await postResponse.json();
       console.log(c('green', '✅ Posted to m/payments!'));
       if (postData.url || postData.id) {
-        config.moltbook.postUrl = postData.url || `https://moltbook.com/m/payments/post/${postData.id}`;
-        console.log(`   ${c('cyan', config.moltbook.postUrl)}`);
+        postUrl = postData.url || `https://moltbook.com/m/payments/post/${postData.id}`;
+        config.moltbook.postUrl = postUrl;
+        console.log(`   ${c('cyan', postUrl)}`);
       }
     } else {
       const errorText = await postResponse.text();
@@ -744,19 +743,7 @@ I'm requesting initial gas tokens to start operating on Flare Network.
     console.log(c('yellow', `⚠️  Network error posting to Moltbook: ${e.message}`));
   }
   
-  console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Step 3: Follow Community')} ${c('cyan', '━━━')}\n`);
-  
-  // Follow m/payments submolt
-  console.log('👥 Following m/payments...');
-  try {
-    await fetch('https://www.moltbook.com/api/v1/submolts/payments/follow', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${apiKey}` }
-    });
-    console.log(c('green', '✅ Following m/payments'));
-  } catch (e) {
-    console.log(c('dim', '   (Could not auto-follow)'));
-  }
+  console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Step 3: Follow @CanddaoJr')} ${c('cyan', '━━━')}\n`);
   
   // Follow CanddaoJr
   console.log('👥 Following @CanddaoJr...');
@@ -770,54 +757,49 @@ I'm requesting initial gas tokens to start operating on Flare Network.
     console.log(c('dim', '   (Could not auto-follow)'));
   }
   
-  console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Step 4: Submit Gas Funding PR')} ${c('cyan', '━━━')}\n`);
+  console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Step 4: Submit Whitelisting PR')} ${c('cyan', '━━━')}\n`);
   
-  // Create funding request file content
-  const fundingRequest = {
+  // Create whitelist request
+  const whitelistRequest = {
     agentName: config.agent.name,
     evmAddress: config.wallet.evmAddress,
-    solanaAddress: config.wallet.solanaAddress,
     description: config.agent.description,
     moltbookUser: config.agent.name,
-    moltbookProof: config.moltbook.postUrl || 'pending',
+    moltbookProof: postUrl || 'pending',
     x402AgentId: config.x402.agentId || null,
-    requestedAt: new Date().toISOString(),
-    status: 'pending'
+    requestedAt: new Date().toISOString()
   };
   
-  // For now, we'll create an issue instead of a PR (simpler, no fork needed)
-  console.log('📋 Submitting gas funding request...\n');
+  console.log('📋 Preparing whitelisting request...\n');
   
   try {
-    // Try to create a GitHub issue
-    const issueBody = `## 🤖 New Agent Gas Funding Request
+    const issueBody = `## 🤖 Agent Whitelisting Request
 
 **Agent Name:** ${config.agent.name}
 **EVM Address:** \`${config.wallet.evmAddress}\`
-**Solana Address:** \`${config.wallet.solanaAddress}\`
+**x402 Agent ID:** ${config.x402.agentId || config.agent.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}
 
-### Verification
-- **Moltbook Proof:** ${config.moltbook.postUrl || 'Posted to m/payments'}
+### Moltbook Verification
 - **Moltbook User:** @${config.agent.name}
+- **Onboarding Post:** ${postUrl || '(pending)'}
 
 ### Agent Details
-- Description: ${config.agent.description}
-${config.x402.enabled ? `- x402 Agent ID: ${config.x402.agentId}` : ''}
+- **Description:** ${config.agent.description}
+${config.channels.telegram ? '- **Channel:** Telegram' : ''}
+${config.channels.discord ? '- **Channel:** Discord' : ''}
 
-### Requested Funding
-- Network: Flare
-- Amount: Standard gas allocation
+### Request
+Please whitelist this agent on the x402 tip facilitator at https://agent-tips.vercel.app
 
 ---
-*Submitted automatically by OpenClaw Setup Wizard*`;
+*Submitted via OpenClaw Setup Wizard*`;
 
-    // Create issue via GitHub API (unauthenticated - will prompt user)
     const issueUrl = `https://github.com/canddao1-dotcom/x402-flare-facilitator/issues/new?` +
-      `title=${encodeURIComponent(`Gas Funding: ${config.agent.name}`)}&` +
+      `title=${encodeURIComponent(`Whitelist Agent: ${config.agent.name}`)}&` +
       `body=${encodeURIComponent(issueBody)}&` +
-      `labels=gas-funding`;
+      `labels=whitelist`;
     
-    console.log(`${c('bright', 'To complete your gas funding request:')}\n`);
+    console.log(`${c('bright', 'To complete your whitelisting request:')}\n`);
     console.log(`1. Open this URL in your browser:`);
     console.log(`   ${c('cyan', issueUrl.substring(0, 80))}...`);
     console.log(`\n2. Click "Submit new issue"\n`);
@@ -837,26 +819,26 @@ ${config.x402.enabled ? `- x402 Agent ID: ${config.x402.agentId}` : ''}
       }
     }
     
-    // Save funding request locally
-    const fundingPath = path.join(config.wallet.keystorePath, 'funding-request.json');
-    fs.writeFileSync(fundingPath, JSON.stringify(fundingRequest, null, 2));
-    console.log(c('green', `\n✅ Saved: funding-request.json`));
+    // Save whitelist request locally
+    const requestPath = path.join(config.wallet.keystorePath, 'whitelist-request.json');
+    fs.writeFileSync(requestPath, JSON.stringify(whitelistRequest, null, 2));
+    console.log(c('green', `\n✅ Saved: whitelist-request.json`));
     
   } catch (e) {
     console.log(c('yellow', `⚠️  Could not auto-submit: ${e.message}`));
-    console.log(c('dim', '\nYou can manually request funding at:'));
+    console.log(c('dim', '\nYou can manually request whitelisting at:'));
     console.log(c('dim', '   https://github.com/canddao1-dotcom/x402-flare-facilitator/issues'));
   }
   
   console.log(`
 ${c('green', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')}
-${c('green', '✅ Gas funding request submitted!')}
+${c('green', '✅ Whitelisting request submitted!')}
 ${c('green', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')}
 
-Once approved, gas tokens will be sent to:
-  ${c('cyan', config.wallet.evmAddress)}
+Once approved, your agent will be able to receive tips at:
+  ${c('cyan', `https://agent-tips.vercel.app?agent=${config.x402.agentId || config.agent.name}`)}
 
-You'll be notified on Moltbook when funding is complete!
+You'll be notified on Moltbook when whitelisting is complete!
 `);
 }
 
@@ -915,88 +897,6 @@ workspace: "."
 #   enabled: true
 #   intervalMinutes: 30
 `;
-}
-
-async function offerStarterFunds(config) {
-  if (!config.x402.enabled) return;
-  
-  console.log(`
-${c('cyan', '╔══════════════════════════════════════════════════════════════╗')}
-${c('cyan', '║')}            ${c('bright', '💰 Get Starter Funds')}                            ${c('cyan', '║')}
-${c('cyan', '╚══════════════════════════════════════════════════════════════╝')}
-
-New agents can request starter funds from our facilitator pool!
-This helps you test x402 payments without needing your own tokens.
-`);
-  
-  const requestFunds = await askYesNo('Request starter funds now?', true, false);
-  
-  if (!requestFunds) {
-    return;
-  }
-  
-  console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Requesting Starter Funds')} ${c('cyan', '━━━')}\n`);
-  
-  // Request funds from facilitator
-  console.log('📡 Connecting to facilitator...\n');
-  
-  try {
-    const response = await fetch('https://agent-tips.vercel.app/api/onboard', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        agentName: config.agent.name,
-        agentId: config.x402.agentId,
-        evmAddress: config.wallet.evmAddress,
-        solanaAddress: config.wallet.solanaAddress,
-        description: config.agent.description,
-        requestType: 'starter_funds'
-      })
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log(c('green', '✅ Request submitted!\n'));
-      
-      if (data.txHash) {
-        console.log(`   Transaction: ${c('cyan', data.txHash)}`);
-        console.log(`   Amount: ${data.amount || '1'} ${data.token || 'USDT'}`);
-        console.log(`   Network: ${data.network || 'Flare'}`);
-      } else if (data.queued) {
-        console.log(`   Status: ${c('yellow', 'Queued for review')}`);
-        console.log(`   Your request will be processed shortly.`);
-      }
-      
-      if (data.message) {
-        console.log(`\n   ${c('dim', data.message)}`);
-      }
-    } else {
-      const errorText = await response.text();
-      console.log(c('yellow', '⚠️  Could not auto-request funds\n'));
-      console.log(c('dim', `   ${errorText || 'Facilitator may be busy'}`));
-      showManualFundingInstructions(config);
-    }
-  } catch (e) {
-    console.log(c('yellow', '⚠️  Network error - could not reach facilitator\n'));
-    showManualFundingInstructions(config);
-  }
-}
-
-function showManualFundingInstructions(config) {
-  console.log(`
-${c('bright', 'Manual Funding Options:')}
-
-1. ${c('cyan', 'Request via API:')}
-   curl -X POST https://agent-tips.vercel.app/api/tip \\
-     -H "Content-Type: application/json" \\
-     -d '{"agent": "${config.x402.agentId}", "amount": "1", "token": "USDT"}'
-
-2. ${c('cyan', 'Request via Web:')}
-   Visit: https://agent-tips.vercel.app?agent=${config.x402.agentId}
-
-3. ${c('cyan', 'Self-fund:')}
-   Send tokens to: ${config.wallet.evmAddress}
-`);
 }
 
 function printFinalInstructions(config, agentStarted = false) {
