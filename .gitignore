@@ -1,10 +1,24 @@
 # Private keys and wallets - NEVER COMMIT
 **/wallet*.json
 **/*-wallet*.json
+**/*-key*.json
+**/*-keystore*.json
+**/facilitator-key.json
+**/facilitator-wallet*.json
+**/facilitator-keystore*.json
+**/.facilitator-password
+facilitator/data/*.json
+facilitator/data/.*
 *.key
 *.pem
 .env
 .env.*
+
+# Sensitive data files - contain wallet<->identity mappings
+data/bounty-claims.json
+data/bounty-whitelist.json
+data/tip-stats.json
+facilitator/data/*.json
 
 # Node
 node_modules/
