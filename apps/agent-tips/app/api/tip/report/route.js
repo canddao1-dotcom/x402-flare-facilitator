@@ -76,11 +76,29 @@ export async function GET() {
     };
   }).sort((a, b) => b.count - a.count)
 
+  // Anonymize wallet addresses in byAgent (keep stats but hide address)
+  const safeByAgent = {};
+  let humanCount = 0;
+  Object.entries(stats.byAgent || {}).forEach(([key, value]) => {
+    if (key.startsWith('wallet:')) {
+      humanCount++;
+      safeByAgent[`human:anonymous${humanCount}`] = value;
+    } else {
+      safeByAgent[key] = value;
+    }
+  });
+  
+  // Mask wallet addresses in recentTips
+  const safeTips = (stats.recentTips || []).slice(0, 10).map(tip => ({
+    ...tip,
+    from: tip.from?.startsWith('0x') ? 'Anonymous human' : tip.from
+  }));
+
   return NextResponse.json({
     totalTipsSent: stats.totalTipsSent || 0,
     totalAmountUSD: recalculatedUSD.toFixed(2),
     byToken: tokenTotals,
-    byAgent: stats.byAgent || {},
-    recentTips: (stats.recentTips || []).slice(0, 10)
+    byAgent: safeByAgent,
+    recentTips: safeTips
   })
 }
