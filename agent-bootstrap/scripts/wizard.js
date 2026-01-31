@@ -713,38 +713,33 @@ async function installAndStartAgent(config) {
     openclawConfig.gateway.mode = 'local';
     console.log(c('green', '   ✓ gateway.mode=local'));
     
-    // Set provider/API key
+    // Set API keys via env.vars (OpenClaw's expected format)
     if (config.llm.apiKey) {
-      if (!openclawConfig.provider) openclawConfig.provider = {};
+      if (!openclawConfig.env) openclawConfig.env = {};
+      if (!openclawConfig.env.vars) openclawConfig.env.vars = {};
+      
       if (config.llm.provider === 'anthropic') {
-        if (!openclawConfig.provider.anthropic) openclawConfig.provider.anthropic = {};
-        openclawConfig.provider.anthropic.apiKey = config.llm.apiKey;
-        console.log(c('green', '   ✓ Anthropic API key'));
+        openclawConfig.env.vars.ANTHROPIC_API_KEY = config.llm.apiKey;
+        console.log(c('green', '   ✓ ANTHROPIC_API_KEY'));
       } else if (config.llm.provider === 'openai') {
-        if (!openclawConfig.provider.openai) openclawConfig.provider.openai = {};
-        openclawConfig.provider.openai.apiKey = config.llm.apiKey;
-        console.log(c('green', '   ✓ OpenAI API key'));
+        openclawConfig.env.vars.OPENAI_API_KEY = config.llm.apiKey;
+        console.log(c('green', '   ✓ OPENAI_API_KEY'));
       } else if (config.llm.provider === 'openrouter') {
-        if (!openclawConfig.provider.openrouter) openclawConfig.provider.openrouter = {};
-        openclawConfig.provider.openrouter.apiKey = config.llm.apiKey;
-        console.log(c('green', '   ✓ OpenRouter API key'));
+        openclawConfig.env.vars.OPENROUTER_API_KEY = config.llm.apiKey;
+        console.log(c('green', '   ✓ OPENROUTER_API_KEY'));
       }
-    }
-    
-    // Set model
-    if (config.llm.model) {
-      openclawConfig.model = config.llm.model;
-      console.log(c('green', '   ✓ Model: ' + config.llm.model));
     }
     
     // Set channels
     if (!openclawConfig.channels) openclawConfig.channels = {};
     
-    // Set Telegram
+    // Set Telegram (botToken is the correct key, not token)
     if (config.channels.telegram?.token) {
       openclawConfig.channels.telegram = {
         enabled: true,
-        token: config.channels.telegram.token
+        botToken: config.channels.telegram.token,
+        dmPolicy: 'allowlist',
+        allowFrom: ['*']
       };
       console.log(c('green', '   ✓ Telegram configured'));
     }
@@ -753,7 +748,7 @@ async function installAndStartAgent(config) {
     if (config.channels.discord?.token) {
       openclawConfig.channels.discord = {
         enabled: true,
-        token: config.channels.discord.token
+        botToken: config.channels.discord.token
       };
       console.log(c('green', '   ✓ Discord configured'));
     }
