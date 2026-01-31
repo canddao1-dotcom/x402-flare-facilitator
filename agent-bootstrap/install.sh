@@ -70,17 +70,28 @@ fi
 
 if [ -z "$AGENT_NAME" ]; then
     echo ""
-    echo "❌ Agent name required"
+    echo "✅ Bootstrap installed! Now run:"
     echo ""
-    echo "Usage:"
-    echo "  curl -fsSL <url> | bash -s -- my-agent-name"
+    echo "  cd agent-bootstrap/agent-bootstrap"
+    echo "  node scripts/wizard.js     # Full setup wizard"
     echo "  # or"
-    echo "  ./install.sh my-agent-name"
-    exit 1
+    echo "  node scripts/bootstrap.js new --name MyAgent"
+    echo ""
+    exit 0
 fi
 
 # Check for --wizard flag
 if [ "$2" = "--wizard" ] || [ "$1" = "--wizard" ]; then
+    # Wizard needs interactive input - can't run in pipe
+    if [ ! -t 0 ]; then
+        echo ""
+        echo "⚠️  Wizard requires interactive terminal."
+        echo ""
+        echo "Run wizard manually:"
+        echo "  cd agent-bootstrap/agent-bootstrap && node scripts/wizard.js"
+        echo ""
+        exit 0
+    fi
     echo ""
     echo "🧙 Starting Setup Wizard..."
     echo ""
