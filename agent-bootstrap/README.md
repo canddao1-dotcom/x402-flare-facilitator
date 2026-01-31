@@ -2,10 +2,19 @@
 
 Spin up a new OpenClaw agent with multi-chain wallets in one command.
 
-## Quick Start
+## One-Line Install (Mac/Linux/Ubuntu)
 
 ```bash
-cd agent-bootstrap
+curl -fsSL https://raw.githubusercontent.com/canddao1-dotcom/x402-flare-facilitator/main/agent-bootstrap/install.sh | bash -s -- my-agent-name
+```
+
+**Windows (Git Bash/WSL):** Same command above.
+
+## Manual Install
+
+```bash
+git clone https://github.com/canddao1-dotcom/x402-flare-facilitator.git
+cd x402-flare-facilitator/agent-bootstrap
 npm install
 node scripts/bootstrap.js new --name my-agent
 ```
