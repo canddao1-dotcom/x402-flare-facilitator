@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { getDefaultConfig, RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
 import { WagmiProvider } from 'wagmi'
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
@@ -37,7 +38,7 @@ const hyperevm = {
 
 const config = getDefaultConfig({
   appName: 'Agent Tips',
-  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_ID || 'agent-tips-demo',
+  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_ID || '21fef48091f12692cad574a6f7753643',
   chains: [flare, hyperevm],
   ssr: true,
 })
@@ -45,6 +46,12 @@ const config = getDefaultConfig({
 const queryClient = new QueryClient()
 
 export function Providers({ children }) {
+  const [mounted, setMounted] = useState(false)
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
@@ -55,7 +62,7 @@ export function Providers({ children }) {
             borderRadius: 'medium',
           })}
         >
-          {children}
+          {mounted ? children : null}
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
