@@ -50,7 +50,7 @@ export default function AgentTips() {
   const [percent, setPercent] = useState(null)
   const [customPercent, setCustomPercent] = useState('')
   const [saved, setSaved] = useState(false)
-  const [tipMode, setTipMode] = useState('pool') // 'pool' or 'wallet'
+  const [tipMode, setTipMode] = useState('wallet') // 'wallet' (users) or 'pool' (agents only)
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -199,15 +199,6 @@ export default function AgentTips() {
         {/* Tip Mode Toggle */}
         <div style={styles.modeToggle}>
           <button
-            onClick={() => setTipMode('pool')}
-            style={{
-              ...styles.modeBtn,
-              ...(tipMode === 'pool' ? styles.modeBtnActive : {})
-            }}
-          >
-            🎁 Free (Pool)
-          </button>
-          <button
             onClick={() => setTipMode('wallet')}
             disabled={!isConnected}
             style={{
@@ -218,7 +209,30 @@ export default function AgentTips() {
           >
             💳 My Wallet
           </button>
+          <button
+            onClick={() => setTipMode('pool')}
+            style={{
+              ...styles.modeBtn,
+              ...(tipMode === 'pool' ? styles.modeBtnActive : {}),
+              ...styles.modeBtnAgents
+            }}
+            title="Pool tips are for registered AI agents only"
+          >
+            🤖 Agents Only
+          </button>
         </div>
+        
+        {/* Mode hints */}
+        {tipMode === 'wallet' && !isConnected && (
+          <div style={styles.modeHint}>
+            👆 Connect your wallet above to send tips
+          </div>
+        )}
+        {tipMode === 'pool' && (
+          <div style={styles.modeHint}>
+            🤖 Pool is for registered AI agents. <a href="https://github.com/canddao1-dotcom/x402-flare-facilitator#agent-registration" target="_blank" rel="noopener" style={styles.hintLink}>Register →</a>
+          </div>
+        )}
         
         {/* Platform selector */}
         <div style={styles.platforms}>
@@ -362,14 +376,15 @@ export default function AgentTips() {
         {/* Save button */}
         <button 
           onClick={handleSave}
-          disabled={loading}
+          disabled={loading || (tipMode === 'wallet' && !isConnected)}
           style={{
             ...styles.saveBtn,
             ...(saved ? styles.saveBtnSuccess : {}),
-            ...(loading ? styles.saveBtnLoading : {})
+            ...(loading ? styles.saveBtnLoading : {}),
+            ...((tipMode === 'wallet' && !isConnected) ? styles.saveBtnDisabled : {})
           }}
         >
-          {loading ? 'Sending...' : saved ? '✓ Sent!' : `Tip ${tipAmount} ${selectedToken}`}
+          {loading ? 'Sending...' : saved ? '✓ Sent!' : (tipMode === 'wallet' && !isConnected) ? 'Connect Wallet to Tip' : `Tip ${tipAmount} ${selectedToken}`}
         </button>
 
         {/* Branding */}
@@ -452,6 +467,20 @@ const styles = {
   modeBtnDisabled: {
     opacity: 0.5,
     cursor: 'not-allowed',
+  },
+  modeBtnAgents: {
+    fontSize: '11px',
+  },
+  modeHint: {
+    fontSize: '11px',
+    color: '#888',
+    textAlign: 'center',
+    marginBottom: '16px',
+    marginTop: '-12px',
+  },
+  hintLink: {
+    color: '#00d4aa',
+    textDecoration: 'none',
   },
   success: {
     color: '#00d4aa',
@@ -637,6 +666,10 @@ const styles = {
   saveBtnLoading: {
     backgroundColor: '#666',
     cursor: 'wait',
+  },
+  saveBtnDisabled: {
+    backgroundColor: '#444',
+    cursor: 'not-allowed',
   },
   error: {
     color: '#ff4444',
