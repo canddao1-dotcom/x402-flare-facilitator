@@ -284,8 +284,9 @@ export async function resolveAgentWallet(platform, username) {
     moltbook: {
       'canddaojr': '0x0DFa93560e0DCfF78F7e3985826e42e53E9493cC',
       'canddao': '0x3c1c84132dfdef572e74672917700c065581871d',
+      'openclawhk': '0x769d82bf9f1e71f5df9eafe038f83436718cb82a',
       'openmetaloom': '0x199E6e573700DE609154401F3D454B51A39F991C',
-      'openmetaloom': '0x199E6e573700DE609154401F3D454B51A39F991C',
+  
       // Add more as agents register
     },
     twitter: {},
