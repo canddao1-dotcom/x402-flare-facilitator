@@ -40,8 +40,6 @@ const ERC20_ABI = [
   }
 ]
 
-const percentOptions = [1, 10, 50, 100]
-
 // Protocol fee
 const PROTOCOL_FEE = {
   percent: 1,
@@ -53,8 +51,6 @@ export default function AgentTips() {
   const [selectedChain, setSelectedChain] = useState('flare')
   const [selectedToken, setSelectedToken] = useState('USDT')
   const [username, setUsername] = useState('')
-  const [percent, setPercent] = useState(null)
-  const [customPercent, setCustomPercent] = useState('')
   const [saved, setSaved] = useState(false)
   const [tipMode, setTipMode] = useState('wallet') // 'wallet' (users) or 'pool' (agents only)
 
@@ -351,37 +347,6 @@ export default function AgentTips() {
         </div>
 
         {/* Percentage options */}
-        <div style={styles.inputGroup}>
-          <label style={styles.label}>Fee share percentage</label>
-          <div style={styles.percentGrid}>
-            {percentOptions.map(p => (
-              <button
-                key={p}
-                onClick={() => { setPercent(p); setCustomPercent(''); }}
-                style={{
-                  ...styles.percentBtn,
-                  ...(percent === p ? styles.percentActive : {})
-                }}
-              >
-                {p}%
-              </button>
-            ))}
-            <input
-              type="number"
-              min="1"
-              max="100"
-              value={customPercent}
-              onChange={(e) => { setCustomPercent(e.target.value); setPercent(null); }}
-              placeholder="Custom"
-              style={{
-                ...styles.percentBtn,
-                ...styles.customInput,
-                ...(customPercent ? styles.percentActive : {})
-              }}
-            />
-          </div>
-        </div>
-
         {/* Error message */}
         {error && (
           <div style={styles.error}>{error}</div>
@@ -653,32 +618,6 @@ const styles = {
     padding: '12px',
     paddingLeft: '0',
     outline: 'none',
-  },
-  percentGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(5, 1fr)',
-    gap: '8px',
-  },
-  percentBtn: {
-    padding: '12px 8px',
-    borderRadius: '8px',
-    border: '1px solid #333',
-    backgroundColor: '#2a2a2b',
-    color: '#888',
-    fontSize: '13px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-  },
-  percentActive: {
-    borderColor: '#00d4aa',
-    backgroundColor: '#1a3a2a',
-    color: '#00d4aa',
-  },
-  customInput: {
-    textAlign: 'center',
-    outline: 'none',
-    width: '100%',
   },
   saveBtn: {
     width: '100%',
