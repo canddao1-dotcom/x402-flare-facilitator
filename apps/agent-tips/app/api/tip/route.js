@@ -22,6 +22,7 @@ const rateLimitState = {
 };
 
 // Tip statistics tracking (resets on deploy - use Redis/KV in production)
+// Tip statistics tracking (resets on deploy - use Redis/KV in production)
 const tipStats = {
   totalTipsSent: 0,
   totalTipsReceived: 0,
