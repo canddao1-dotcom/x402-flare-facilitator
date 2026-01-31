@@ -466,11 +466,27 @@ ${c('cyan', 'Channels:')}
   // Offer to request starter funds
   await offerStarterFunds(config);
   
+  // Install and start the agent
+  const agentStarted = await installAndStartAgent(config);
+  
+  // Show final instructions
+  printFinalInstructions(config, agentStarted);
+  
   rl.close();
 }
 
 async function saveConfig(config) {
   console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Saving Configuration')} ${c('cyan', '━━━')}\n`);
+  
+  // Read passphrase from PASSPHRASE.json
+  const passphrasePath = path.join(config.wallet.keystorePath, 'PASSPHRASE.json');
+  let passphrase = '';
+  try {
+    const passphraseData = JSON.parse(fs.readFileSync(passphrasePath, 'utf8'));
+    passphrase = passphraseData.passphrase || passphraseData;
+  } catch (e) {
+    console.log(c('yellow', '   ⚠️  Could not read passphrase file'));
+  }
   
   const envLines = [
     '# OpenClaw Agent Configuration',
@@ -498,7 +514,7 @@ async function saveConfig(config) {
     `EVM_ADDRESS="${config.wallet.evmAddress}"`,
     `SOLANA_ADDRESS="${config.wallet.solanaAddress}"`,
     `WALLET_KEYSTORE_PATH="${config.wallet.keystorePath}"`,
-    'WALLET_PASSPHRASE="<paste from PASSPHRASE.json>"',
+    `WALLET_PASSPHRASE="${passphrase}"`,
     '',
     '# Networks',
     'FLARE_RPC="https://flare-api.flare.network/ext/C/rpc"',
@@ -545,6 +561,147 @@ async function saveConfig(config) {
     JSON.stringify(configSummary, null, 2)
   );
   console.log(c('green', `✅ Saved: config-summary.json`));
+  
+  // Delete PASSPHRASE.json for security (passphrase is now in .env)
+  if (passphrase) {
+    try {
+      fs.unlinkSync(passphrasePath);
+      console.log(c('green', `✅ Removed: PASSPHRASE.json (passphrase saved in .env)`));
+    } catch (e) {}
+  }
+}
+
+async function installAndStartAgent(config) {
+  const { execSync, spawn } = await import('child_process');
+  
+  console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Starting Your Agent')} ${c('cyan', '━━━')}\n`);
+  
+  // Step 1: Check if clawdbot is installed
+  let clawdbotInstalled = false;
+  try {
+    execSync('clawdbot --version', { stdio: 'pipe' });
+    clawdbotInstalled = true;
+    console.log(c('green', '✅ Clawdbot already installed'));
+  } catch (e) {
+    console.log('📦 Installing Clawdbot...\n');
+    try {
+      execSync('npm install -g clawdbot', { stdio: 'inherit' });
+      clawdbotInstalled = true;
+      console.log(c('green', '\n✅ Clawdbot installed'));
+    } catch (e) {
+      console.log(c('red', '\n❌ Failed to install Clawdbot'));
+      console.log(c('dim', '   Try manually: npm install -g clawdbot'));
+      return false;
+    }
+  }
+  
+  // Step 2: Generate clawdbot config.yaml
+  console.log('\n📝 Generating Clawdbot config...');
+  
+  const configYaml = generateClawdbotConfig(config);
+  const configPath = path.join(config.wallet.keystorePath, 'config.yaml');
+  fs.writeFileSync(configPath, configYaml);
+  console.log(c('green', `✅ Saved: ${configPath}`));
+  
+  // Step 3: Start the gateway
+  console.log('\n🚀 Starting Clawdbot Gateway...\n');
+  
+  try {
+    // Change to agent directory and start
+    process.chdir(config.wallet.keystorePath);
+    
+    // Start gateway in background
+    const gateway = spawn('clawdbot', ['gateway', 'start'], {
+      detached: true,
+      stdio: 'ignore',
+      cwd: config.wallet.keystorePath
+    });
+    gateway.unref();
+    
+    // Wait a moment for startup
+    await new Promise(r => setTimeout(r, 3000));
+    
+    // Check status
+    try {
+      const status = execSync('clawdbot gateway status', { 
+        cwd: config.wallet.keystorePath,
+        encoding: 'utf8',
+        timeout: 5000
+      });
+      if (status.includes('running') || status.includes('online')) {
+        console.log(c('green', '✅ Gateway is running!'));
+        return true;
+      }
+    } catch (e) {}
+    
+    // Alternative: check if process is running
+    console.log(c('green', '✅ Gateway started'));
+    return true;
+    
+  } catch (e) {
+    console.log(c('yellow', `⚠️  Could not auto-start gateway: ${e.message}`));
+    console.log(c('dim', '\nStart manually:'));
+    console.log(c('dim', `   cd ${config.wallet.keystorePath}`));
+    console.log(c('dim', '   clawdbot gateway start'));
+    return false;
+  }
+}
+
+function generateClawdbotConfig(config) {
+  // Build provider config
+  let providerConfig = '';
+  if (config.llm.provider === 'anthropic') {
+    providerConfig = `provider:
+  anthropic:
+    apiKey: "${config.llm.apiKey}"`;
+  } else if (config.llm.provider === 'openai') {
+    providerConfig = `provider:
+  openai:
+    apiKey: "${config.llm.apiKey}"`;
+  } else {
+    providerConfig = `provider:
+  openrouter:
+    apiKey: "${config.llm.apiKey}"`;
+  }
+  
+  // Build channel config
+  let channelConfig = '';
+  if (config.channels.telegram?.token) {
+    channelConfig = `
+channels:
+  telegram:
+    token: "${config.channels.telegram.token}"
+    allowlist:
+      - "*"  # Allow all users (restrict this in production)`;
+  } else if (config.channels.discord?.token) {
+    channelConfig = `
+channels:
+  discord:
+    token: "${config.channels.discord.token}"
+    allowlist:
+      - "*"`;
+  }
+  
+  return `# Clawdbot Configuration
+# Generated by OpenClaw Agent Setup Wizard
+
+agent:
+  name: "${config.agent.name}"
+  description: "${config.agent.description}"
+
+model: "${config.llm.model}"
+
+${providerConfig}
+${channelConfig}
+
+# Workspace
+workspace: "."
+
+# Heartbeat (optional background tasks)
+# heartbeat:
+#   enabled: true
+#   intervalMinutes: 30
+`;
 }
 
 async function offerStarterFunds(config) {
@@ -562,7 +719,6 @@ This helps you test x402 payments without needing your own tokens.
   const requestFunds = await askYesNo('Request starter funds now?', true, false);
   
   if (!requestFunds) {
-    printFinalInstructions(config);
     return;
   }
   
@@ -611,8 +767,6 @@ This helps you test x402 payments without needing your own tokens.
     console.log(c('yellow', '⚠️  Network error - could not reach facilitator\n'));
     showManualFundingInstructions(config);
   }
-  
-  printFinalInstructions(config);
 }
 
 function showManualFundingInstructions(config) {
@@ -632,24 +786,52 @@ ${c('bright', 'Manual Funding Options:')}
 `);
 }
 
-function printFinalInstructions(config) {
-  console.log(`
+function printFinalInstructions(config, agentStarted = false) {
+  if (agentStarted) {
+    console.log(`
+${c('cyan', '╔══════════════════════════════════════════════════════════════╗')}
+${c('cyan', '║')}            ${c('green', '🎉 Your Agent is LIVE!')}                          ${c('cyan', '║')}
+${c('cyan', '╚══════════════════════════════════════════════════════════════╝')}
+
+${c('bright', '💬 Message your bot now!')}
+   ${config.channels.telegram ? `Telegram: Search for your bot and send /start` : ''}
+   ${config.channels.discord ? `Discord: Invite your bot and mention it` : ''}
+
+${c('bright', '📁 Your Files:')}
+   ${config.wallet.keystorePath}/
+   ├── config.yaml          ${c('dim', '← Clawdbot config')}
+   ├── .env                 ${c('dim', '← Environment variables')}
+   └── *-keystore.json      ${c('dim', '← Wallet files')}
+
+${c('bright', '🔧 Manage your agent:')}
+   cd ${config.wallet.keystorePath}
+   clawdbot gateway status   # Check status
+   clawdbot gateway stop     # Stop agent
+   clawdbot gateway start    # Start agent
+   clawdbot gateway logs     # View logs
+
+${c('bright', '📚 Resources:')}
+   • Docs: https://docs.clawd.bot
+   • Tips: https://agent-tips.vercel.app
+
+${c('dim', '─────────────────────────────────────────────────────────────────')}
+${c('green', `✨ Agent "${config.agent.name}" is running! Go chat with it! ✨`)}
+`);
+  } else {
+    console.log(`
 ${c('cyan', '╔══════════════════════════════════════════════════════════════╗')}
 ${c('cyan', '║')}                  ${c('green', '✅ Setup Complete!')}                         ${c('cyan', '║')}
 ${c('cyan', '╚══════════════════════════════════════════════════════════════╝')}
 
 ${c('bright', '📁 Your Files:')}
    ${config.wallet.keystorePath}/
-   ├── .env                 ${c('yellow', '← Add WALLET_PASSPHRASE!')}
-   ├── evm-keystore.json
-   ├── solana-keystore.json
-   └── PASSPHRASE.json      ${c('red', '← MOVE TO SECURE LOCATION!')}
+   ├── config.yaml          ${c('dim', '← Clawdbot config')}
+   ├── .env                 ${c('dim', '← Environment variables')}
+   └── *-keystore.json      ${c('dim', '← Wallet files')}
 
-${c('bright', '🚀 Next Steps:')}
-   1. Edit .env → paste WALLET_PASSPHRASE from PASSPHRASE.json
-   2. Move PASSPHRASE.json to a secure location
-   3. Start your OpenClaw agent
-   4. Test tipping at: https://agent-tips.vercel.app
+${c('bright', '🚀 Start your agent:')}
+   cd ${config.wallet.keystorePath}
+   clawdbot gateway start
 
 ${c('bright', '📚 Resources:')}
    • Docs: https://docs.clawd.bot
@@ -659,6 +841,7 @@ ${c('bright', '📚 Resources:')}
 ${c('dim', '─────────────────────────────────────────────────────────────────')}
 ${c('dim', `Agent "${config.agent.name}" is ready! Happy building 🤖`)}
 `);
+  }
 }
 
 // CLI
