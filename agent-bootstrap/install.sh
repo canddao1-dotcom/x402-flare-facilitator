@@ -56,52 +56,20 @@ echo ""
 echo "✅ Installation complete!"
 echo ""
 
-# Get agent name - support both argument and interactive
-AGENT_NAME="$1"
-
-if [ -z "$AGENT_NAME" ]; then
-    # Try interactive (won't work in pipe, so use /dev/tty)
-    if [ -t 0 ]; then
-        read -p "🤖 Enter your agent name: " AGENT_NAME
-    else
-        read -p "🤖 Enter your agent name: " AGENT_NAME < /dev/tty
-    fi
-fi
-
-if [ -z "$AGENT_NAME" ]; then
-    echo ""
-    echo "✅ Bootstrap installed! Now run:"
-    echo ""
-    echo "  cd agent-bootstrap/agent-bootstrap"
-    echo "  node scripts/wizard.js     # Full setup wizard"
-    echo "  # or"
-    echo "  node scripts/bootstrap.js new --name MyAgent"
-    echo ""
-    exit 0
-fi
-
-# Check for --wizard flag
-if [ "$2" = "--wizard" ] || [ "$1" = "--wizard" ]; then
-    # Wizard needs interactive input - can't run in pipe
-    if [ ! -t 0 ]; then
-        echo ""
-        echo "⚠️  Wizard requires interactive terminal."
-        echo ""
-        echo "Copy and paste:"
-        echo ""
-        echo "  cd agent-bootstrap/agent-bootstrap && node scripts/wizard.js"
-        echo ""
-        exit 0
-    fi
+# Always run the wizard (it handles everything)
+# Check if we have interactive terminal
+if [ -t 0 ]; then
     echo ""
     echo "🧙 Starting Setup Wizard..."
     echo ""
     node scripts/wizard.js
 else
-    # Run basic bootstrap
-    node scripts/bootstrap.js new --name "$AGENT_NAME"
-    
+    # Piped input - can't run interactive wizard
     echo ""
-    echo "💡 Want full setup with API keys & tipping?"
-    echo "   Run: node scripts/wizard.js"
+    echo "✅ Bootstrap installed!"
+    echo ""
+    echo "Copy and paste to start the wizard:"
+    echo ""
+    echo "  cd agent-bootstrap/agent-bootstrap && node scripts/wizard.js"
+    echo ""
 fi
