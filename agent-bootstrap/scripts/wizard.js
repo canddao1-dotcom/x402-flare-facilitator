@@ -17,6 +17,11 @@ import crypto from 'crypto';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, '..', 'data');
 
+// Ensure data directory exists
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
 // ANSI colors
 const colors = {
   reset: '\x1b[0m',
@@ -61,41 +66,74 @@ async function ask(question, defaultVal = '', allowBack = true) {
 }
 
 async function askSecret(question, allowBack = true) {
+  // Simpler implementation that works across more terminals
+  // Falls back to visible input if TTY tricks fail
   return new Promise((resolve) => {
     const backHint = allowBack ? c('dim', ' (or "back")') : '';
-    process.stdout.write(`${question}${backHint}: `);
     
-    if (process.stdin.isTTY) {
-      process.stdin.setRawMode(true);
-    }
-    
-    let input = '';
-    const onData = (char) => {
-      char = char.toString();
-      
-      if (char === '\n' || char === '\r') {
-        if (process.stdin.isTTY) {
-          process.stdin.setRawMode(false);
-        }
-        process.stdin.removeListener('data', onData);
-        process.stdout.write('\n');
-        if (allowBack && input.toLowerCase() === 'back') {
+    try {
+      // Try to use raw mode for hidden input
+      if (process.stdin.isTTY && process.stdin.setRawMode) {
+        process.stdout.write(`${question}${backHint}: `);
+        process.stdin.setRawMode(true);
+        process.stdin.resume();
+        
+        let input = '';
+        const onData = (char) => {
+          char = char.toString();
+          
+          if (char === '\n' || char === '\r') {
+            try {
+              process.stdin.setRawMode(false);
+            } catch (e) {}
+            process.stdin.removeListener('data', onData);
+            process.stdout.write('\n');
+            if (allowBack && input.toLowerCase() === 'back') {
+              resolve(BACK);
+            } else {
+              resolve(input);
+            }
+          } else if (char === '\u0003') {
+            try {
+              process.stdin.setRawMode(false);
+            } catch (e) {}
+            process.exit();
+          } else if (char === '\u007F' || char === '\b') {
+            if (input.length > 0) {
+              input = input.slice(0, -1);
+              process.stdout.write('\b \b');
+            }
+          } else if (char.charCodeAt(0) >= 32) {
+            input += char;
+            process.stdout.write('*');
+          }
+        };
+        
+        process.stdin.on('data', onData);
+      } else {
+        // Fallback: use regular readline (input will be visible)
+        console.log(c('yellow', '   (Note: input will be visible - TTY not available)'));
+        rl.question(`${question}${backHint}: `, (answer) => {
+          const trimmed = answer.trim();
+          if (allowBack && trimmed.toLowerCase() === 'back') {
+            resolve(BACK);
+          } else {
+            resolve(trimmed);
+          }
+        });
+      }
+    } catch (e) {
+      // Ultimate fallback
+      console.log(c('yellow', '   (Note: input will be visible)'));
+      rl.question(`${question}${backHint}: `, (answer) => {
+        const trimmed = answer.trim();
+        if (allowBack && trimmed.toLowerCase() === 'back') {
           resolve(BACK);
         } else {
-          resolve(input);
+          resolve(trimmed);
         }
-      } else if (char === '\u0003') {
-        process.exit();
-      } else if (char === '\u007F') {
-        input = input.slice(0, -1);
-      } else {
-        input += char;
-        process.stdout.write('*');
-      }
-    };
-    
-    process.stdin.on('data', onData);
-    process.stdin.resume();
+      });
+    }
   });
 }
 
@@ -638,10 +676,32 @@ Outputs a complete .env file ready for OpenClaw.
     return;
   }
   
-  await runWizard();
+  try {
+    await runWizard();
+  } catch (e) {
+    console.error(c('red', `\n❌ Error: ${e.message}`));
+    if (e.stack) {
+      console.error(c('dim', e.stack));
+    }
+    process.exit(1);
+  }
 }
 
-main().catch((e) => {
-  console.error(c('red', `\n❌ Error: ${e.message}`));
+// Handle unexpected termination
+process.on('uncaughtException', (e) => {
+  console.error(c('red', `\n❌ Unexpected error: ${e.message}`));
+  if (rl) {
+    try { rl.close(); } catch (e) {}
+  }
   process.exit(1);
 });
+
+process.on('SIGINT', () => {
+  console.log(c('yellow', '\n\n👋 Setup cancelled.'));
+  if (rl) {
+    try { rl.close(); } catch (e) {}
+  }
+  process.exit(0);
+});
+
+main();
