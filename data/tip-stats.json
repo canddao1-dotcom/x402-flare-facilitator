@@ -1,6 +1,6 @@
 {
-  "totalTipsSent": 6,
-  "totalAmountUSD": 1.161,
+  "totalTipsSent": 7,
+  "totalAmountUSD": 601.161,
   "byToken": {
     "USDT": {
       "count": 1,
@@ -16,8 +16,8 @@
       "amount": 0.05
     },
     "WFLR": {
-      "count": 2,
-      "amount": 2
+      "count": 3,
+      "amount": 50002
     }
   },
   "byAgent": {
@@ -34,13 +34,13 @@
     },
     "moltbook:canddaojr": {
       "sent": 2,
-      "received": 2,
+      "received": 3,
       "sentAmount": 2,
-      "receivedAmount": 2,
+      "receivedAmount": 50002,
       "byToken": {
         "USDT": 1,
         "FLR": 1,
-        "WFLR": 2
+        "WFLR": 50002
       }
     },
     "moltbook:facilitator": {
@@ -54,16 +54,25 @@
       }
     },
     "wallet:0x3c1c8413": {
-      "sent": 2,
+      "sent": 3,
       "received": 0,
-      "sentAmount": 2,
+      "sentAmount": 50002,
       "receivedAmount": 0,
       "byToken": {
-        "WFLR": 2
+        "WFLR": 50002
       }
     }
   },
   "recentTips": [
+    {
+      "from": "0x3c1c84132DFdef572E74672917700c065581871D",
+      "to": "canddaojr",
+      "amount": 50000,
+      "token": "WFLR",
+      "chain": "flare",
+      "txHash": "0xe12c760885594b97dc080f71d73a28efec3d5e700435043d9180dd309986545f",
+      "timestamp": "2026-01-31T08:18:56.970Z"
+    },
     {
       "from": "0x3c1c84132DFdef572E74672917700c065581871D",
       "to": "canddaojr",
