@@ -240,10 +240,10 @@ export function getSupportedAssets() {
  * Resolve agent wallet from various sources
  */
 export async function resolveAgentWallet(platform, username) {
-  // Hard-coded registry for now
+  // Hard-coded registry (lowercase keys for case-insensitive lookup)
   const REGISTRY = {
     moltbook: {
-      'CanddaoJr': '0x0DFa93560e0DCfF78F7e3985826e42e53E9493cC',
+      'canddaojr': '0x0DFa93560e0DCfF78F7e3985826e42e53E9493cC',
       'canddao': '0x3c1c84132dfdef572e74672917700c065581871d',
       // Add more as agents register
     },
@@ -251,7 +251,7 @@ export async function resolveAgentWallet(platform, username) {
     github: {}
   };
   
-  const wallet = REGISTRY[platform]?.[username];
+  const wallet = REGISTRY[platform]?.[username.toLowerCase()];
   
   if (!wallet) {
     // TODO: Fetch from Moltbook API when available

@@ -8,7 +8,7 @@ const platforms = [
   { id: 'moltbook', icon: '🦞', name: 'Moltbook', active: true },
 ]
 
-const GITHUB_REPO = 'https://github.com/AIdatamadao/x402'
+const GITHUB_REPO = 'https://github.com/canddao1-dotcom/x402-flare-facilitator'
 
 const chains = [
   { id: 'flare', name: 'Flare', icon: '🔥', chainId: 14, tokens: ['USDT', 'WFLR', 'FXRP'] },
@@ -129,7 +129,7 @@ export default function AgentTips() {
         setTimeout(() => setSaved(false), 5000)
         
       } else {
-        // Pool-funded tip - facilitator pays
+        // Pool-funded tip - only for registered agents
         const response = await fetch('/api/tip', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -138,7 +138,9 @@ export default function AgentTips() {
             username: username,
             amount: tipAmount,
             token: selectedToken,
-            chain: selectedChain
+            chain: selectedChain,
+            mode: 'pool'
+            // senderAgent would be set by authenticated agents
           })
         })
         
@@ -148,6 +150,8 @@ export default function AgentTips() {
           setTxHash(data.txHash)
           setSaved(true)
           setTimeout(() => setSaved(false), 5000)
+        } else if (data.agentsOnly) {
+          setError('🤖 Pool tips are for registered agents only. Connect your wallet to tip!')
         } else {
           setError(data.error || 'Failed to send tip')
         }

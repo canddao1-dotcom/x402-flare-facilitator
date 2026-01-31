@@ -1,64 +1,34 @@
 import { NextResponse } from 'next/server'
-import { sendTip, resolveAgentWallet, getFacilitatorBalance, TOKENS, CHAINS, getSupportedAssets } from '../../../lib/x402.js'
-import fs from 'fs'
-import path from 'path'
+import { sendTip, resolveAgentWallet, CHAINS, getSupportedAssets } from '../../../lib/x402.js'
 
-// Load facilitator key
+// Load facilitator key from environment
 function getFacilitatorKey() {
-  // Check env first
-  if (process.env.FACILITATOR_PRIVATE_KEY) {
-    return process.env.FACILITATOR_PRIVATE_KEY;
-  }
-  
-  // Check key file
-  const keyPath = path.join(process.cwd(), '..', '..', 'facilitator', 'data', 'facilitator-wallet.json');
-  if (fs.existsSync(keyPath)) {
-    const data = JSON.parse(fs.readFileSync(keyPath, 'utf8'));
-    return data.privateKey;
-  }
-  
-  return null;
+  return process.env.FACILITATOR_PRIVATE_KEY || null;
 }
 
-// Tips log
-const TIPS_LOG = path.join(process.cwd(), 'data', 'tips-log.json');
+// Whitelisted agents who can use pool-funded tips
+// Register at: https://github.com/canddao1-dotcom/x402-flare-facilitator
+const POOL_WHITELIST = {
+  // Format: 'platform:username_lowercase': { approved: true, maxDaily: 10 }
+  'moltbook:canddaojr': { approved: true, note: 'CanddaoJr - FlareBank agent' },
+  'moltbook:starclawd': { approved: true, note: 'Starclawd' },
+  // Add more via PR to the repo
+};
 
-function ensureDataDir() {
-  const dir = path.dirname(TIPS_LOG);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
+function isWhitelisted(platform, username) {
+  const key = `${platform}:${username.toLowerCase()}`;
+  return POOL_WHITELIST[key]?.approved === true;
 }
 
-function loadTipsLog() {
-  ensureDataDir();
-  if (fs.existsSync(TIPS_LOG)) {
-    return JSON.parse(fs.readFileSync(TIPS_LOG, 'utf8'));
-  }
-  return { tips: [], totalTipped: {} };
-}
-
+// Tips logging
 function saveTip(tip) {
-  const log = loadTipsLog();
-  log.tips.push(tip);
-  
-  // Update totals per recipient
-  const key = `${tip.platform}:${tip.username}`;
-  if (!log.totalTipped[key]) {
-    log.totalTipped[key] = { count: 0, amounts: {} };
-  }
-  log.totalTipped[key].count++;
-  const tokenKey = tip.token;
-  log.totalTipped[key].amounts[tokenKey] = 
-    (parseFloat(log.totalTipped[key].amounts[tokenKey] || '0') + parseFloat(tip.amount)).toFixed(6);
-  
-  fs.writeFileSync(TIPS_LOG, JSON.stringify(log, null, 2));
+  console.log('[TIP]', JSON.stringify(tip));
 }
 
 export async function POST(request) {
   try {
     const body = await request.json()
-    const { platform, username, amount, token = 'USDT', chain = 'flare' } = body
+    const { platform, username, amount, token = 'USDT', chain = 'flare', mode = 'pool', senderAgent } = body
 
     // Validate inputs
     if (!platform || !username || !amount) {
@@ -83,6 +53,27 @@ export async function POST(request) {
         { error: 'Invalid amount' },
         { status: 400 }
       )
+    }
+
+    // Pool mode whitelist check
+    if (mode === 'pool') {
+      if (!senderAgent) {
+        return NextResponse.json({
+          error: 'Pool tips are only available to registered agents',
+          message: 'Connect your wallet to tip, or register as an agent at our GitHub repo.',
+          registrationUrl: 'https://github.com/canddao1-dotcom/x402-flare-facilitator#agent-registration',
+          agentsOnly: true
+        }, { status: 403 })
+      }
+      
+      if (!isWhitelisted('moltbook', senderAgent)) {
+        return NextResponse.json({
+          error: `Agent '${senderAgent}' is not registered for pool tips`,
+          message: 'Register your agent at our GitHub repo to use pool-funded tips.',
+          registrationUrl: 'https://github.com/canddao1-dotcom/x402-flare-facilitator#agent-registration',
+          agentsOnly: true
+        }, { status: 403 })
+      }
     }
 
     // Resolve agent wallet
@@ -149,7 +140,6 @@ export async function POST(request) {
 }
 
 export async function GET(request) {
-  const log = loadTipsLog();
   const assets = getSupportedAssets();
   
   return NextResponse.json({
@@ -160,14 +150,11 @@ export async function GET(request) {
       'POST /api/tip': 'Send a tip to an agent',
       'GET /api/tip': 'Get API info and stats'
     },
-    supported_platforms: ['moltbook', 'twitter', 'github'],
+    supported_platforms: ['moltbook'],
     supported_chains: assets.chains,
     stats: {
-      totalTips: log.tips.length,
-      topRecipients: Object.entries(log.totalTipped)
-        .sort((a, b) => b[1].count - a[1].count)
-        .slice(0, 5)
-        .map(([key, data]) => ({ agent: key, tips: data.count, amounts: data.amounts }))
+      note: 'Tips logged to Vercel console',
+      topRecipients: []
     }
   })
 }
