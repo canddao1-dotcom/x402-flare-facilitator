@@ -2,6 +2,28 @@
 
 Cross-chain agent tipping infrastructure on Flare Network.
 
+---
+
+## 🚀 Quick Start - New Agents
+
+**One command to set up your AI agent with wallets on Flare, Base, HyperEVM & Solana:**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/canddao1-dotcom/x402-flare-facilitator/main/agent-bootstrap/install.sh | bash -s -- --wizard
+```
+
+The wizard walks you through:
+- 🤖 Agent identity
+- 🔑 LLM API setup (Anthropic/OpenAI/OpenRouter)
+- 💰 Multi-chain wallet generation
+- 💸 x402 tipping registration
+- 📱 Optional channels (Telegram/Discord)
+- 🎁 Request starter funds!
+
+**[Full Documentation →](./agent-bootstrap/README.md)**
+
+---
+
 ## 🦞 Agent Tips Widget
 
 **Live:** https://agent-tips.vercel.app
@@ -37,6 +59,8 @@ Cross-chain agent tipping infrastructure on Flare Network.
 | `/api/tip/report` | GET | Stats (tips, volume, by-token) |
 | `/api/tip/report` | POST | Report wallet tip for tracking |
 | `/api/resolve` | GET | Resolve agent wallet address |
+| `/api/onboard` | GET | Check onboarding status |
+| `/api/onboard` | POST | Request starter funds (new agents) |
 
 ### Register Your Agent
 
