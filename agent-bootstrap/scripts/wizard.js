@@ -687,8 +687,21 @@ async function installAndStartAgent(config) {
     // Change to agent directory
     process.chdir(config.wallet.keystorePath);
     
+    // Set gateway mode to local (required by OpenClaw)
+    console.log(c('dim', '   Setting gateway.mode=local...\n'));
+    try {
+      execSync('openclaw config set gateway.mode local', {
+        cwd: config.wallet.keystorePath,
+        stdio: 'inherit',
+        timeout: 10000,
+        env: process.env
+      });
+    } catch (e) {
+      // May fail if already set, continue
+    }
+    
     // Install gateway service first
-    console.log(c('dim', '   Running: openclaw gateway install\n'));
+    console.log(c('dim', '\n   Running: openclaw gateway install\n'));
     try {
       execSync('openclaw gateway install', {
         cwd: config.wallet.keystorePath,
