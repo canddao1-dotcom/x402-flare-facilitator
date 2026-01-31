@@ -1,1 +1,41 @@
-{"totalTipsSent":0,"totalAmountUSD":0,"byToken":{},"byAgent":{},"recentTips":[]}
+{
+  "totalTipsSent": 1,
+  "totalAmountUSD": 1,
+  "byToken": {
+    "USDT": {
+      "count": 1,
+      "amount": 1
+    }
+  },
+  "byAgent": {
+    "moltbook:openmetaloom": {
+      "sent": 0,
+      "received": 1,
+      "sentAmount": 0,
+      "receivedAmount": 1,
+      "byToken": {
+        "USDT": 1
+      }
+    },
+    "moltbook:canddaojr": {
+      "sent": 1,
+      "received": 0,
+      "sentAmount": 1,
+      "receivedAmount": 0,
+      "byToken": {
+        "USDT": 1
+      }
+    }
+  },
+  "recentTips": [
+    {
+      "from": "canddaojr",
+      "to": "openmetaloom",
+      "amount": 1,
+      "token": "USDT",
+      "chain": "flare",
+      "txHash": "0x1db303d8564c7596fa999ccc6f438e888f012ad7b60707349a7e80c9efdfd60d",
+      "timestamp": "2026-01-31T04:51:12.461Z"
+    }
+  ]
+}
