@@ -56,11 +56,26 @@ echo ""
 echo "✅ Installation complete!"
 echo ""
 
-# Prompt for agent name
-read -p "🤖 Enter your agent name: " AGENT_NAME
+# Get agent name - support both argument and interactive
+AGENT_NAME="$1"
 
 if [ -z "$AGENT_NAME" ]; then
+    # Try interactive (won't work in pipe, so use /dev/tty)
+    if [ -t 0 ]; then
+        read -p "🤖 Enter your agent name: " AGENT_NAME
+    else
+        read -p "🤖 Enter your agent name: " AGENT_NAME < /dev/tty
+    fi
+fi
+
+if [ -z "$AGENT_NAME" ]; then
+    echo ""
     echo "❌ Agent name required"
+    echo ""
+    echo "Usage:"
+    echo "  curl -fsSL <url> | bash -s -- my-agent-name"
+    echo "  # or"
+    echo "  ./install.sh my-agent-name"
     exit 1
 fi
 
