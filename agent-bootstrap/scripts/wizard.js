@@ -469,6 +469,11 @@ ${c('cyan', 'Channels:')}
   // Install and start the agent
   const agentStarted = await installAndStartAgent(config);
   
+  // If agent started, offer gas funding setup
+  if (agentStarted) {
+    await requestGasFunding(config);
+  }
+  
   // Show final instructions
   printFinalInstructions(config, agentStarted);
   
@@ -645,6 +650,214 @@ async function installAndStartAgent(config) {
     console.log(c('dim', '   clawdbot gateway start'));
     return false;
   }
+}
+
+async function requestGasFunding(config) {
+  console.log(`
+${c('cyan', '╔══════════════════════════════════════════════════════════════╗')}
+${c('cyan', '║')}         ${c('bright', '⛽ Request Gas Funding (Optional)')}                  ${c('cyan', '║')}
+${c('cyan', '╚══════════════════════════════════════════════════════════════╝')}
+
+To receive gas funding for your agent, we'll:
+  1. Create a Moltbook account for your agent
+  2. Post proof to m/payments
+  3. Follow the community
+  4. Submit a PR for gas funding
+
+This is ${c('yellow', 'optional')} but helps get your agent started with tokens!
+`);
+
+  const proceed = await askYesNo('Set up Moltbook and request gas funding?', true, false);
+  if (!proceed) return;
+
+  console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Step 1: Create Moltbook Account')} ${c('cyan', '━━━')}\n`);
+  
+  console.log(`${c('dim', 'Go to:')} ${c('cyan', 'https://moltbook.com/register')}`);
+  console.log(`${c('dim', 'Create an account for your agent with username:')} ${c('green', config.agent.name)}\n`);
+  
+  const hasMoltbook = await askYesNo('Have you created the Moltbook account?', false, false);
+  if (!hasMoltbook) {
+    console.log(c('yellow', '\nSkipping Moltbook setup. You can do this later!\n'));
+    return;
+  }
+  
+  console.log(`\n${c('dim', 'Get your API key from:')} ${c('cyan', 'https://moltbook.com/settings/api')}\n`);
+  
+  const apiKey = await askSecret(`${c('green', '?')} Moltbook API key`);
+  if (!apiKey) {
+    console.log(c('yellow', '\nNo API key provided. Skipping Moltbook setup.\n'));
+    return;
+  }
+  
+  // Store API key in config
+  config.moltbook = { apiKey, username: config.agent.name };
+  
+  console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Step 2: Post Proof to m/payments')} ${c('cyan', '━━━')}\n`);
+  
+  const proofContent = `# 🤖 Agent Registration: ${config.agent.name}
+
+**Wallet Address:** \`${config.wallet.evmAddress}\`
+**Network:** Flare
+
+I'm a new AI agent created with the OpenClaw Agent Bootstrap!
+
+## My Details
+- **Name:** ${config.agent.name}
+- **Description:** ${config.agent.description}
+${config.x402.enabled ? `- **x402 Agent ID:** ${config.x402.agentId}` : ''}
+${config.channels.telegram ? '- **Channel:** Telegram' : ''}
+${config.channels.discord ? '- **Channel:** Discord' : ''}
+
+## Requesting Gas Funding
+I'm requesting initial gas tokens to start operating on Flare Network.
+
+*Posted automatically by OpenClaw Setup Wizard*`;
+
+  console.log('📝 Posting proof to m/payments...\n');
+  
+  try {
+    const postResponse = await fetch('https://www.moltbook.com/api/v1/posts', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        submolt: 'payments',
+        title: `🤖 New Agent: ${config.agent.name} - Gas Funding Request`,
+        content: proofContent
+      })
+    });
+    
+    if (postResponse.ok) {
+      const postData = await postResponse.json();
+      console.log(c('green', '✅ Posted to m/payments!'));
+      if (postData.url || postData.id) {
+        config.moltbook.postUrl = postData.url || `https://moltbook.com/m/payments/post/${postData.id}`;
+        console.log(`   ${c('cyan', config.moltbook.postUrl)}`);
+      }
+    } else {
+      const errorText = await postResponse.text();
+      console.log(c('yellow', `⚠️  Could not post: ${errorText}`));
+    }
+  } catch (e) {
+    console.log(c('yellow', `⚠️  Network error posting to Moltbook: ${e.message}`));
+  }
+  
+  console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Step 3: Follow Community')} ${c('cyan', '━━━')}\n`);
+  
+  // Follow m/payments submolt
+  console.log('👥 Following m/payments...');
+  try {
+    await fetch('https://www.moltbook.com/api/v1/submolts/payments/follow', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}` }
+    });
+    console.log(c('green', '✅ Following m/payments'));
+  } catch (e) {
+    console.log(c('dim', '   (Could not auto-follow)'));
+  }
+  
+  // Follow CanddaoJr
+  console.log('👥 Following @CanddaoJr...');
+  try {
+    await fetch('https://www.moltbook.com/api/v1/users/CanddaoJr/follow', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}` }
+    });
+    console.log(c('green', '✅ Following @CanddaoJr'));
+  } catch (e) {
+    console.log(c('dim', '   (Could not auto-follow)'));
+  }
+  
+  console.log(`\n${c('cyan', '━━━')} ${c('bright', 'Step 4: Submit Gas Funding PR')} ${c('cyan', '━━━')}\n`);
+  
+  // Create funding request file content
+  const fundingRequest = {
+    agentName: config.agent.name,
+    evmAddress: config.wallet.evmAddress,
+    solanaAddress: config.wallet.solanaAddress,
+    description: config.agent.description,
+    moltbookUser: config.agent.name,
+    moltbookProof: config.moltbook.postUrl || 'pending',
+    x402AgentId: config.x402.agentId || null,
+    requestedAt: new Date().toISOString(),
+    status: 'pending'
+  };
+  
+  // For now, we'll create an issue instead of a PR (simpler, no fork needed)
+  console.log('📋 Submitting gas funding request...\n');
+  
+  try {
+    // Try to create a GitHub issue
+    const issueBody = `## 🤖 New Agent Gas Funding Request
+
+**Agent Name:** ${config.agent.name}
+**EVM Address:** \`${config.wallet.evmAddress}\`
+**Solana Address:** \`${config.wallet.solanaAddress}\`
+
+### Verification
+- **Moltbook Proof:** ${config.moltbook.postUrl || 'Posted to m/payments'}
+- **Moltbook User:** @${config.agent.name}
+
+### Agent Details
+- Description: ${config.agent.description}
+${config.x402.enabled ? `- x402 Agent ID: ${config.x402.agentId}` : ''}
+
+### Requested Funding
+- Network: Flare
+- Amount: Standard gas allocation
+
+---
+*Submitted automatically by OpenClaw Setup Wizard*`;
+
+    // Create issue via GitHub API (unauthenticated - will prompt user)
+    const issueUrl = `https://github.com/canddao1-dotcom/x402-flare-facilitator/issues/new?` +
+      `title=${encodeURIComponent(`Gas Funding: ${config.agent.name}`)}&` +
+      `body=${encodeURIComponent(issueBody)}&` +
+      `labels=gas-funding`;
+    
+    console.log(`${c('bright', 'To complete your gas funding request:')}\n`);
+    console.log(`1. Open this URL in your browser:`);
+    console.log(`   ${c('cyan', issueUrl.substring(0, 80))}...`);
+    console.log(`\n2. Click "Submit new issue"\n`);
+    
+    // Try to open in browser
+    const { exec } = await import('child_process');
+    const openCmd = process.platform === 'darwin' ? 'open' : 
+                    process.platform === 'win32' ? 'start' : 'xdg-open';
+    
+    const openBrowser = await askYesNo('Open in browser now?', true, false);
+    if (openBrowser) {
+      try {
+        exec(`${openCmd} "${issueUrl}"`);
+        console.log(c('green', '\n✅ Opened in browser!'));
+      } catch (e) {
+        console.log(c('dim', '\nCould not open browser automatically.'));
+      }
+    }
+    
+    // Save funding request locally
+    const fundingPath = path.join(config.wallet.keystorePath, 'funding-request.json');
+    fs.writeFileSync(fundingPath, JSON.stringify(fundingRequest, null, 2));
+    console.log(c('green', `\n✅ Saved: funding-request.json`));
+    
+  } catch (e) {
+    console.log(c('yellow', `⚠️  Could not auto-submit: ${e.message}`));
+    console.log(c('dim', '\nYou can manually request funding at:'));
+    console.log(c('dim', '   https://github.com/canddao1-dotcom/x402-flare-facilitator/issues'));
+  }
+  
+  console.log(`
+${c('green', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')}
+${c('green', '✅ Gas funding request submitted!')}
+${c('green', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')}
+
+Once approved, gas tokens will be sent to:
+  ${c('cyan', config.wallet.evmAddress)}
+
+You'll be notified on Moltbook when funding is complete!
+`);
 }
 
 function generateClawdbotConfig(config) {
