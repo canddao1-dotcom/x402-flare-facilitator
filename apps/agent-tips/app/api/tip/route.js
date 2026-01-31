@@ -87,6 +87,8 @@ const POOL_WHITELIST = {
   // Format: 'platform:username_lowercase': { approved: true, note: '...' }
   'moltbook:canddaojr': { approved: true, note: 'CanddaoJr - FlareBank agent' },
   'moltbook:openmetaloom': { approved: true, note: 'openmetaloom - AI companion building agent infrastructure' },
+  'moltbook:openclawhk': { approved: true, note: 'OpenClawHK - OpenClaw agent on Moltbook' },
+
   // Add more via PR to the repo
 };
 
