@@ -448,6 +448,130 @@ app.get('/bounty', async (req, res) => {
   });
 });
 
+// Self-whitelist endpoint - agents submit their Moltbook verification
+app.post('/whitelist', async (req, res) => {
+  try {
+    const { agentName, evmAddress, moltbookUser, moltbookPostUrl, moltbookPostId } = req.body;
+    
+    // Validate required fields
+    if (!agentName || !evmAddress || !moltbookUser) {
+      return res.status(400).json({
+        error: 'missing_fields',
+        message: 'agentName, evmAddress, and moltbookUser are required'
+      });
+    }
+    
+    // Validate EVM address format
+    if (!/^0x[a-fA-F0-9]{40}$/.test(evmAddress)) {
+      return res.status(400).json({
+        error: 'invalid_address',
+        message: 'Invalid EVM address format'
+      });
+    }
+    
+    const normalizedAddress = evmAddress.toLowerCase();
+    
+    // Check if already whitelisted
+    if (isWhitelisted(normalizedAddress)) {
+      const entry = getWhitelistEntry(normalizedAddress);
+      return res.json({
+        success: true,
+        alreadyWhitelisted: true,
+        moltbookAgent: entry?.moltbookAgent,
+        approvedAt: entry?.approvedAt
+      });
+    }
+    
+    // Verify Moltbook post exists and is in m/payments
+    let postVerified = false;
+    let verifiedPostUrl = moltbookPostUrl;
+    
+    if (moltbookPostId || moltbookPostUrl) {
+      try {
+        // Extract post ID from URL if provided
+        let postId = moltbookPostId;
+        if (!postId && moltbookPostUrl) {
+          const urlMatch = moltbookPostUrl.match(/\/(?:p|m\/[^/]+)\/(?:post\/)?([a-zA-Z0-9_-]+)/);
+          if (urlMatch) postId = urlMatch[1];
+        }
+        
+        if (postId) {
+          const postRes = await fetch(`https://www.moltbook.com/api/v1/posts/${postId}`);
+          if (postRes.ok) {
+            const postData = await postRes.json();
+            if (postData.post) {
+              const post = postData.post;
+              const isPaymentsSubmolt = post.submolt?.name === 'payments';
+              const isCorrectAuthor = post.author?.name?.toLowerCase() === moltbookUser.toLowerCase();
+              
+              if (isPaymentsSubmolt && isCorrectAuthor) {
+                postVerified = true;
+                verifiedPostUrl = `https://moltbook.com/m/payments/${postId}`;
+                console.log(`✅ Moltbook post verified for ${moltbookUser}: ${postId}`);
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Moltbook verification error:', e.message);
+      }
+    }
+    
+    // Add to whitelist
+    const whitelist = loadWhitelist();
+    
+    whitelist.agents.push({
+      address: normalizedAddress,
+      moltbookAgent: moltbookUser,
+      agentName: agentName,
+      moltbookPostUrl: verifiedPostUrl || `https://moltbook.com/u/${moltbookUser}`,
+      postVerified,
+      approvedAt: new Date().toISOString()
+    });
+    
+    saveWhitelist(whitelist);
+    
+    console.log(`🎉 Agent whitelisted: ${agentName} (${moltbookUser}) - ${normalizedAddress}`);
+    
+    res.json({
+      success: true,
+      message: `Welcome ${agentName}! You're now whitelisted for the $1 bounty.`,
+      moltbookAgent: moltbookUser,
+      evmAddress: normalizedAddress,
+      postVerified,
+      nextSteps: [
+        'Send a valid x402 payment verification to claim your $1 bounty',
+        'Visit https://agent-tips.vercel.app to test tipping'
+      ]
+    });
+    
+  } catch (error) {
+    console.error('Whitelist error:', error);
+    res.status(500).json({ error: 'internal_error', message: error.message });
+  }
+});
+
+// GET whitelist status
+app.get('/whitelist/:address', (req, res) => {
+  const address = req.params.address.toLowerCase();
+  const whitelisted = isWhitelisted(address);
+  const entry = getWhitelistEntry(address);
+  const claimed = hasClaimed(address);
+  
+  res.json({
+    address,
+    whitelisted,
+    claimed,
+    canClaimBounty: whitelisted && !claimed,
+    entry: entry ? {
+      moltbookAgent: entry.moltbookAgent,
+      agentName: entry.agentName,
+      moltbookPostUrl: entry.moltbookPostUrl,
+      approvedAt: entry.approvedAt
+    } : null
+  });
+});
+
 // Payment requirements endpoint (what this facilitator accepts)
 app.get('/requirements', (req, res) => {
   res.json({
