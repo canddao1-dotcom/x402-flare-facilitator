@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { sendTip, resolveAgentWallet, CHAINS, getSupportedAssets, PROTOCOL_FEE } from '../../../lib/x402.js'
+import { persistTip } from '../../../lib/stats.js'
 
 // Load facilitator key from environment
 function getFacilitatorKey() {
@@ -18,6 +19,15 @@ const POOL_LIMITS = {
 const rateLimitState = {
   agentTips: {}, // { 'agent': { count: 0, lastTip: timestamp, date: 'YYYY-MM-DD' } }
   dailyPoolTotal: { amount: 0, date: '' }
+};
+
+// Tip statistics tracking (resets on deploy - use Redis/KV in production)
+const tipStats = {
+  totalTipsSent: 0,
+  totalTipsReceived: 0,
+  totalAmountUSD: 0,
+  byAgent: {}, // { 'agent': { sent: 0, received: 0, sentAmount: 0, receivedAmount: 0 } }
+  recentTips: [] // Last 50 tips for display
 };
 
 function getTodayDate() {
@@ -81,14 +91,54 @@ function recordTip(senderAgent, amount) {
   rateLimitState.dailyPoolTotal.date = today;
 }
 
+// Record tip statistics for both sender and receiver
+function recordTipStats(senderAgent, receiverAgent, amount, token, txHash) {
+  const amountNum = parseFloat(amount);
+  
+  // Initialize sender stats
+  if (!tipStats.byAgent[senderAgent]) {
+    tipStats.byAgent[senderAgent] = { sent: 0, received: 0, sentAmount: 0, receivedAmount: 0 };
+  }
+  // Initialize receiver stats
+  if (!tipStats.byAgent[receiverAgent]) {
+    tipStats.byAgent[receiverAgent] = { sent: 0, received: 0, sentAmount: 0, receivedAmount: 0 };
+  }
+  
+  // Update sender stats
+  tipStats.byAgent[senderAgent].sent++;
+  tipStats.byAgent[senderAgent].sentAmount += amountNum;
+  
+  // Update receiver stats
+  tipStats.byAgent[receiverAgent].received++;
+  tipStats.byAgent[receiverAgent].receivedAmount += amountNum;
+  
+  // Update totals
+  tipStats.totalTipsSent++;
+  tipStats.totalTipsReceived++;
+  tipStats.totalAmountUSD += amountNum;
+  
+  // Add to recent tips (keep last 50)
+  tipStats.recentTips.unshift({
+    from: senderAgent,
+    to: receiverAgent,
+    amount: amountNum,
+    token,
+    txHash,
+    timestamp: new Date().toISOString()
+  });
+  if (tipStats.recentTips.length > 50) {
+    tipStats.recentTips.pop();
+  }
+}
+
 // Whitelisted agents who can use pool-funded tips (send AND receive)
 // Register at: https://github.com/canddao1-dotcom/x402-flare-facilitator
 const POOL_WHITELIST = {
   // Format: 'platform:username_lowercase': { approved: true, note: '...' }
   'moltbook:canddaojr': { approved: true, note: 'CanddaoJr - FlareBank agent' },
+  'moltbook:canddao': { approved: true, note: 'Canddao - FlareBank founder' },
   'moltbook:openmetaloom': { approved: true, note: 'openmetaloom - AI companion building agent infrastructure' },
   'moltbook:openclawhk': { approved: true, note: 'OpenClawHK - OpenClaw agent on Moltbook' },
-
   // Add more via PR to the repo
 };
 
@@ -226,6 +276,22 @@ export async function POST(request) {
       recordTip(senderAgent, amount);
     }
 
+    // Record tip statistics (in-memory)
+    const sender = senderAgent ? `${platform}:${senderAgent}` : 'wallet';
+    const receiver = `${platform}:${username}`;
+    recordTipStats(sender, receiver, amount, token, result.txHash);
+
+    // Persist tip to GitHub (survives deploys)
+    persistTip({
+      from: senderAgent || null,
+      to: username,
+      amount: amount,
+      token: token,
+      chain: chain,
+      txHash: result.txHash,
+      platform: platform
+    }).catch(e => console.error('[Stats] Persist failed:', e.message));
+
     // Log the tip
     saveTip({
       platform,
@@ -240,13 +306,16 @@ export async function POST(request) {
       senderAgent: senderAgent || null
     });
 
-    console.log(`💰 [Agent Tips] ${result.amount} ${token} (fee: ${result.fee}) on ${chain} → ${username} (${recipientWallet}) tx: ${result.txHash}`);
+    console.log(`💰 [Agent Tips] ${result.amount} ${token} (fee: ${result.fee}) on ${chain} → ${username} tx: ${result.txHash}`);
+
+    // Redact wallet address in response (show only first/last chars)
+    const redactedRecipient = `${recipientWallet.slice(0,6)}...${recipientWallet.slice(-4)}`;
 
     return NextResponse.json({
       success: true,
       txHash: result.txHash,
       feeTxHash: result.feeTxHash,
-      recipient: recipientWallet,
+      recipient: redactedRecipient,
       amount: result.amount,
       fee: result.fee,
       totalAmount: amount,
@@ -269,9 +338,28 @@ export async function POST(request) {
 export async function GET(request) {
   const assets = getSupportedAssets();
   
+  // Get registered agents from whitelist with their stats
+  const registeredAgents = Object.entries(POOL_WHITELIST)
+    .filter(([_, data]) => data.approved)
+    .map(([key, data]) => {
+      const [platform, username] = key.split(':');
+      const agentStats = tipStats.byAgent[key] || { sent: 0, received: 0, sentAmount: 0, receivedAmount: 0 };
+      return {
+        agent: key,
+        platform,
+        username,
+        note: data.note,
+        tipsSent: agentStats.sent,
+        tipsReceived: agentStats.received,
+        amountSent: agentStats.sentAmount.toFixed(2),
+        amountReceived: agentStats.receivedAmount.toFixed(2)
+      };
+    })
+    .sort((a, b) => b.tipsSent - a.tipsSent); // Sort by most tips sent (top senders)
+  
   return NextResponse.json({
     name: 'Agent Tips API',
-    version: '0.2.0',
+    version: '0.3.0',
     poweredBy: 'x402 + m/payments',
     endpoints: {
       'POST /api/tip': 'Send a tip to an agent',
@@ -280,8 +368,12 @@ export async function GET(request) {
     supported_platforms: ['moltbook'],
     supported_chains: assets.chains,
     stats: {
-      note: 'Tips logged to Vercel console',
-      topRecipients: []
+      note: 'In-memory stats (resets on deploy). Persistence coming soon.',
+      totalTipsSent: tipStats.totalTipsSent,
+      totalAmountUSD: tipStats.totalAmountUSD.toFixed(2),
+      registeredAgents: registeredAgents.length,
+      topRecipients: registeredAgents,
+      recentTips: tipStats.recentTips.slice(0, 10) // Last 10 tips
     }
   })
 }
