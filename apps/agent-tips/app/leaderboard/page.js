@@ -68,7 +68,7 @@ export default function Leaderboard() {
         .map(([key, stats]) => ({
           agent: key,
           platform: 'wallet',
-          username: key.split(':')[1], // e.g., "0x3c1c8413"
+          username: key.split(':')[1].slice(0, 6) + '...' + key.split(':')[1].slice(-4), // mask: 0x3c1c...8413
           note: 'Generous human 🙏',
           tipsSent: stats.sent || 0,
           tipsReceived: stats.received || 0,
