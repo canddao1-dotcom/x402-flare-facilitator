@@ -101,3 +101,18 @@ export function resolveWallet(platform: string, username: string): string | null
 export function getAllAgents(): Agent[] {
   return [...Object.values(SEED_AGENTS), ...Object.values(runtimeAgents)];
 }
+
+// Token verification
+const tokenToAgent: Record<string, Agent> = {};
+
+export function generateToken(): string {
+  return 'clawly_sk_' + Math.random().toString(16).slice(2) + Math.random().toString(16).slice(2);
+}
+
+export function storeToken(token: string, agent: Agent): void {
+  tokenToAgent[token] = agent;
+}
+
+export function verifyToken(token: string): Agent | null {
+  return tokenToAgent[token] || null;
+}
