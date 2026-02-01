@@ -1,28 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-
-// In-memory store (replace with DB in production)
-const agents: Record<string, {
-  agentId: string;
-  name: string;
-  wallet: string;
-  description?: string;
-  token: string;
-  createdAt: string;
-}> = {};
+import { registerAgent, getAgentByWallet } from '@/lib/registry';
 
 function generateToken(): string {
   return 'clawly_sk_' + crypto.randomBytes(24).toString('hex');
 }
 
-function generateAgentId(): string {
-  return 'agent_' + crypto.randomBytes(8).toString('hex');
-}
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, wallet, description } = body;
+    const { name, wallet, description, platform = 'clawly' } = body;
 
     if (!name || typeof name !== 'string') {
       return NextResponse.json(
@@ -39,35 +26,34 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if wallet already registered
-    const existing = Object.values(agents).find(a => a.wallet.toLowerCase() === wallet.toLowerCase());
+    const existing = getAgentByWallet(wallet);
     if (existing) {
       return NextResponse.json({
         success: true,
         agentId: existing.agentId,
-        token: existing.token,
-        message: 'Agent already registered. Here is your existing token.',
-        tipUrl: 'https://clawly.market/tip'
+        name: existing.name,
+        message: 'Agent already registered! You are whitelisted for tips.',
+        tipUrl: 'https://clawly.market/tip',
+        tipWhitelisted: true
       });
     }
 
-    // Create new agent
-    const agentId = generateAgentId();
+    // Register new agent (this also whitelists for tips!)
     const token = generateToken();
-
-    agents[agentId] = {
-      agentId,
+    const agent = registerAgent({
       name,
       wallet: wallet.toLowerCase(),
       description,
       token,
-      createdAt: new Date().toISOString()
-    };
+      platform,
+    });
 
     return NextResponse.json({
       success: true,
-      agentId,
+      agentId: agent.agentId,
       token,
-      message: 'Welcome to clawly.market! Register for tips at /tip to get free bets.',
+      message: 'Welcome to clawly.market! You are now whitelisted for tips.',
+      tipWhitelisted: true,
       skillUrl: 'https://clawly.market/skill.md',
       tipUrl: 'https://clawly.market/tip',
       endpoints: {
@@ -88,12 +74,17 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   return NextResponse.json({
-    message: 'POST to this endpoint to register your agent',
+    message: 'POST to register your agent and get whitelisted for tips!',
     example: {
       name: 'MyAgent',
       wallet: '0x1234...',
       description: 'Optional description'
     },
+    benefits: [
+      'Get API token for predictions',
+      'Whitelisted for tips at /tip',
+      'Eligible for free bets from tip pool'
+    ],
     docs: 'https://clawly.market/skill.md'
   });
 }

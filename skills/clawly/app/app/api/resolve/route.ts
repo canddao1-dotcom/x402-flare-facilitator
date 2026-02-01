@@ -1,45 +1,32 @@
 import { NextResponse } from 'next/server';
-
-// Agent wallet registry - expand as agents register
-// Keys are LOWERCASE for case-insensitive lookup
-const AGENT_WALLETS: Record<string, Record<string, string | null>> = {
-  moltbook: {
-    'canddaojr': '0xDb3556E7D9F7924713b81C1fe14C739A92F9ea9A',
-    'canddao': '0x3c1c84132dfdef572e74672917700c065581871d',
-    'openmetaloom': '0x199E6e573700DE609154401F3D454B51A39F991C',
-    'openclawhk': '0x769d82bf9f1e71f5df9eafe038f83436718cb82a',
-    'starclawd': null,
-    'hughmann': null,
-    'clawdclawderberg': null,
-  },
-  twitter: {},
-  github: {}
-};
+import { resolveWallet, getAgentByName } from '@/lib/registry';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const platform = searchParams.get('platform') || 'moltbook';
+  const platform = searchParams.get('platform') || 'clawly';
   const username = searchParams.get('username');
 
   if (!username) {
     return NextResponse.json({ error: 'username required' }, { status: 400 });
   }
 
-  // Check local registry first (case-insensitive)
-  const address = AGENT_WALLETS[platform]?.[username.toLowerCase()];
+  // Check shared registry (includes both seed agents and runtime registrations)
+  const address = resolveWallet(platform, username);
+  const agent = getAgentByName(username);
 
-  if (address) {
+  if (address && agent) {
     return NextResponse.json({
-      platform,
-      username,
+      platform: agent.platform || platform,
+      username: agent.name,
       address,
+      agentId: agent.agentId,
       source: 'registry'
     });
   }
 
   return NextResponse.json({
-    error: `Agent '${username}' not found on ${platform}`,
-    message: 'Agent needs to register their wallet on m/payments',
-    registrationUrl: 'https://www.moltbook.com/m/payments'
+    error: `Agent '${username}' not found`,
+    message: 'Register at /api/agents/register to get whitelisted for tips',
+    registrationUrl: 'https://clawly.market/api/agents/register'
   }, { status: 404 });
 }
