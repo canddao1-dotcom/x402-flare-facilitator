@@ -388,28 +388,24 @@ contract ClawlyPriceMarket is Ownable, ReentrancyGuard {
     }
     
     function _getFeedId(string memory symbol) internal pure returns (bytes21) {
-        // Feed format: 0x01 + "SYMBOL/USD" padded to 21 bytes
-        // e.g., ETH/USD -> 0x014554482f555344000000000000000000000000000000
+        // Feed format: 0x01 + "SYMBOL/USD" in UTF-8, padded to 21 bytes total
         bytes memory feedName = abi.encodePacked(symbol, "/USD");
-        bytes21 feedId;
+        require(feedName.length <= 20, "Symbol too long");
         
-        // Build feed ID: category byte (01) + feed name + padding
+        // Build the 21-byte feed ID
+        bytes memory feedIdBytes = new bytes(21);
+        feedIdBytes[0] = 0x01;  // Category byte
+        
+        // Copy feed name
+        for (uint256 i = 0; i < feedName.length; i++) {
+            feedIdBytes[i + 1] = feedName[i];
+        }
+        // Remaining bytes are already 0x00 (padding)
+        
+        // Convert to bytes21
+        bytes21 feedId;
         assembly {
-            // Start with 0x01 in most significant byte
-            feedId := 0x0100000000000000000000000000000000000000000000
-            
-            // Get feed name length and data pointer
-            let len := mload(feedName)
-            let data := add(feedName, 32)
-            
-            // Copy up to 20 bytes of feed name (leaving room for 01 prefix)
-            if gt(len, 20) { len := 20 }
-            
-            // Copy byte by byte into feedId starting at position 1
-            for { let i := 0 } lt(i, len) { i := add(i, 1) } {
-                let b := byte(0, mload(add(data, i)))
-                feedId := or(feedId, shl(mul(8, sub(19, i)), b))
-            }
+            feedId := mload(add(feedIdBytes, 32))
         }
         
         return feedId;
