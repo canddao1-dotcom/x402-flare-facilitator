@@ -1,0 +1,165 @@
+{
+  "pools": {
+    "sflr-wflr-enosys": {
+      "address": "0x25B4f3930934F0A3CbB885C624EcEe75a2917144",
+      "dex": "enosys",
+      "token0": "sFLR",
+      "token1": "WFLR",
+      "fee": 500,
+      "enabled": true,
+      "collect_interval": 300,
+      "notes": "Main sFLR pool, highest liquidity"
+    },
+    "sflr-wflr-sparkdex": {
+      "address": "0xc9baBa3F36ccaa54675dEECC327Ec7Eaa48CB97d",
+      "dex": "sparkdex",
+      "token0": "sFLR",
+      "token1": "WFLR",
+      "fee": 100,
+      "enabled": true,
+      "collect_interval": 300,
+      "notes": "Lowest fee tier"
+    },
+    "sflr-wflr-sparkdex-05": {
+      "address": "0x9A3215f8B0d128816F75175c9fD74e7ebbD987DA",
+      "dex": "sparkdex",
+      "token0": "sFLR",
+      "token1": "WFLR",
+      "fee": 500,
+      "enabled": true,
+      "collect_interval": 300,
+      "notes": "0.05% fee tier"
+    },
+    "stxrp-fxrp-enosys": {
+      "address": "0xa4cE7dAfC6fB5acEEDd0070620b72aB8f09b0770",
+      "dex": "enosys",
+      "token0": "stXRP",
+      "token1": "FXRP",
+      "fee": 500,
+      "enabled": true,
+      "collect_interval": 300,
+      "notes": "stXRP yield pool"
+    },
+    "stxrp-fxrp-sparkdex": {
+      "address": "0xffEd33D28ca65e52e927849F456D8e820B324508",
+      "dex": "sparkdex",
+      "token0": "stXRP",
+      "token1": "FXRP",
+      "fee": 500,
+      "enabled": true,
+      "collect_interval": 300
+    },
+    "cdp-usdt0-enosys": {
+      "address": "0x975f0369d31f1dD79ABF057Ad369AE7d5B9F6FB4",
+      "dex": "enosys",
+      "token0": "CDP",
+      "token1": "USD\u20ae0",
+      "fee": 500,
+      "enabled": true,
+      "collect_interval": 300,
+      "notes": "CDP stablecoin pool"
+    },
+    "wflr-usdt0-enosys": {
+      "address": "0x3C2a7B76795E58829FAAa034486D417dd0155162",
+      "dex": "enosys",
+      "token0": "WFLR",
+      "token1": "USD\u20ae0",
+      "fee": 3000,
+      "enabled": true,
+      "collect_interval": 300
+    },
+    "wflr-usdt0-sparkdex": {
+      "address": "0x63873f0d7165689022FeEf1B77428DF357b33dcf",
+      "dex": "sparkdex",
+      "token0": "WFLR",
+      "token1": "USD\u20ae0",
+      "fee": 500,
+      "enabled": true,
+      "collect_interval": 300,
+      "notes": "Best USDT pool on SparkDex"
+    },
+    "wflr-fxrp-enosys": {
+      "address": "0xb4CB11a84CFbd8F6336Dc9417aC45c1F8E5B59E7",
+      "dex": "enosys",
+      "token0": "WFLR",
+      "token1": "FXRP",
+      "fee": 3000,
+      "enabled": true,
+      "collect_interval": 300
+    },
+    "wflr-fxrp-sparkdex": {
+      "address": "0x589689984a06E4640593eDec64e415c415940C7F",
+      "dex": "sparkdex",
+      "token0": "WFLR",
+      "token1": "FXRP",
+      "fee": 500,
+      "enabled": true,
+      "collect_interval": 300
+    },
+    "wflr-stxrp-sparkdex": {
+      "address": "0x8ee8414eE2B9D4Bf6c8DE40d95167C2643C2C544",
+      "dex": "sparkdex",
+      "token0": "WFLR",
+      "token1": "stXRP",
+      "fee": 500,
+      "enabled": false,
+      "collect_interval": 300,
+      "notes": "Low liquidity"
+    },
+    "sflr-stxrp-sparkdex": {
+      "address": "0xd7428eb2052D736B3384524eff732d0BA2051793",
+      "dex": "sparkdex",
+      "token0": "sFLR",
+      "token1": "stXRP",
+      "fee": 500,
+      "enabled": false,
+      "collect_interval": 300,
+      "notes": "Cross-yield pool"
+    }
+  },
+  "tokens": {
+    "WFLR": "0x1D80c49BbBCd1C0911346656B529DF9E5c2F783d",
+    "sFLR": "0x12e605bc104e93B45e1aD99F9e555f659051c2BB",
+    "FXRP": "0xAd552A648C74D49E10027AB8a618A3ad4901c5bE",
+    "stXRP": "0x4C18Ff3C89632c3Dd62E796c0aFA5c07c4c1B2b3",
+    "USD\u20ae0": "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
+    "CDP": "0x6Cd3a5Ba46FA254D4d2E3C2B37350ae337E94a0F",
+    "USDC.e": "0xfbda5f676cb37624f28265a144a48b0d6e87d3b6",
+    "APS": "0xff56eb5b1a7faa972291117e5e9565da29bc808d",
+    "HLN": "0x59eF3445be28e10417c1bdeD1637967aF5a8a7a3",
+    "rFLR": "0x26d460c3Cf931Fb2014FA436a49e3Af08619810e"
+  },
+  "dexes": {
+    "enosys": {
+      "factory": "0x17AA157AC8C54034381b840Cb8f6bf7Fc355f0de",
+      "nft_manager": "0xD9770b1C7A6ccd33C75b5bcB1c0078f46bE46657",
+      "quoter": "0x0A32EE3f66cC9E68ffb7cBeCf77bAef03e2d7D56",
+      "router": "0x5FD34090E9b195d8482Ad3CC63dB078534F1b113"
+    },
+    "sparkdex": {
+      "factory": "0x8a362AA1c81ED0Ee2Ae677A8b59e0f563DD317De",
+      "nft_manager": "0x8087E71f0e0d3C276cD189a39Ec2Dc9F2988C8a5",
+      "quoter": "0xb97b65105817FA3da11e8b97dc411962397C0d3E",
+      "router": "0xa0DD40483E5F3Ed9F17f5a1dd58881d87e46cC7f"
+    }
+  },
+  "training": {
+    "state_dim": 35,
+    "action_dim": 3,
+    "batch_size": 64,
+    "learning_rate": 0.0001,
+    "gamma": 0.99,
+    "tau": 0.001,
+    "max_steps_per_episode": 500,
+    "save_interval": 100
+  },
+  "data_collection": {
+    "snapshot_interval_seconds": 300,
+    "historical_step_blocks": 1800,
+    "min_snapshots_for_training": 1000
+  },
+  "notes": {
+    "hln_aps": "HLN and APS do not have significant V3 pool liquidity yet - mainly traded on V2 (Blazeswap)",
+    "usdx": "USDX not found on Flare DEXs"
+  }
+}

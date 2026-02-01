@@ -1,0 +1,135 @@
+{
+  "dao_address": "0xaa68bc4bab9a63958466f49f5a58c54a412d4906",
+  "last_updated": "2026-01-28T18:28:00Z",
+  
+  "wallet_tokens": {
+    "WFLR": {
+      "address": "0x1d80c49bbbcd1c0911346656b529df9e5c2f783d",
+      "decimals": 18
+    },
+    "BANK": {
+      "address": "0x194726f6c2ae988f1ab5e1c943c17e591a6f6059",
+      "decimals": 18
+    },
+    "sFLR": {
+      "address": "0x12e605bc104e93b45e1ad99f9e555f659051c2bb",
+      "decimals": 18
+    },
+    "FXRP": {
+      "address": "0xad552a648c74d49e10027ab8a618a3ad4901c5be",
+      "decimals": 6
+    },
+    "stXRP": {
+      "address": "0x4c18ff3c89632c3dd62e796c0afa5c07c4c1b2b3",
+      "decimals": 6
+    },
+    "CDP": {
+      "address": "0x6cd3a5ba46fa254d4d2e3c2b37350ae337e94a0f",
+      "decimals": 18
+    },
+    "rFLR": {
+      "address": "0x26d460c3cf931fb2014fa436a49e3af08619810e",
+      "decimals": 18
+    },
+    "SLP": {
+      "address": "0x0f574fc895c1abf82aeff334fa9d8ba43f866111",
+      "decimals": 18,
+      "note": "SparkDex LP token"
+    },
+    "USDT0": {
+      "address": "0xe7cd86e13ac4309349f30b3435a9d337750fc82d",
+      "decimals": 6
+    },
+    "GANJA": {
+      "address": "0x9aa42de5ec6f3b3bbf252bf8ac81acb338d888b7",
+      "decimals": 18
+    },
+    "ETH": {
+      "address": "TODO_FIND_BRIDGED_ETH",
+      "decimals": 18,
+      "note": "Bridged ETH on Flare"
+    },
+    "POL": {
+      "address": "TODO_FIND_POL",
+      "decimals": 18
+    }
+  },
+
+  "lp_positions": {
+    "enosys_v2_bank_wflr": {
+      "pool": "0x5f29c8d049e47dd180c2b83e3560e8e271110335",
+      "token0": "BANK",
+      "token1": "WFLR",
+      "type": "uniswap_v2"
+    },
+    "enosys_v3_fxrp_stxrp": {
+      "nft_manager": "0xd9770b1c7a6ccd33c75b5bcb1c0078f46be46657",
+      "token_id": 28509,
+      "pool": "0xa4ce7dafc6fb5aceedd0070620b72ab8f09b0770",
+      "token0": "stXRP",
+      "token1": "FXRP",
+      "fee": 500,
+      "type": "uniswap_v3"
+    }
+  },
+
+  "farming_positions": {
+    "enosys_fxrp_cdp": {
+      "protocol": "Enosys",
+      "pool": "FXRP CDP Stability Pool",
+      "contract": "0x2c817f7159c08d94f09764086330c96bb3265a2f",
+      "implementation": "0x37ffd5d66fb182493c315b8b8f1c9d67dcf95b18",
+      "type": "StabilityPool",
+      "note": "DAO sent 2,304 CDP total - check DeBank for current balance"
+    },
+    "enosys_wflr_cdp": {
+      "protocol": "Enosys", 
+      "pool": "WFLR CDP Stability Pool",
+      "contract": "0x0dd6daab4cb9a0ba6707cf59dbfbc28cc33ca24a",
+      "type": "StabilityPool",
+      "note": "DAO sent 200 CDP total - check DeBank for current balance"
+    },
+    "enosys_aps_staking": {
+      "protocol": "Enosys",
+      "pool": "APS Governance Staking",
+      "aps_token": "0xff56eb5b1a7faa972291117e5e9565da29bc808d",
+      "staking_contract": "0x7eb8ceb0f64d934a31835b98eb4cbab3ca56df28",
+      "incentives_claim": "0x0c090979c22f9b07efc0cf617c2f38e990fdacd4",
+      "query": "balanceOf(address) on staking contract",
+      "note": "DAO earns APS from stability pools, stakes for governance rewards"
+    }
+  },
+
+  "flare_native": {
+    "delegation_rewards": {
+      "note": "2,296.59 WFLR claimable via RewardManager",
+      "contract": "flare_reward_manager"
+    },
+    "vesting": {
+      "note": "977.56 WFLR vesting (rFLR), 95.48 claimable",
+      "token": "rFLR"
+    }
+  },
+
+  "other_protocols": {
+    "firelight": {
+      "pool": "stXRP FXRP yield",
+      "balance": "0.0678 FXRP equivalent",
+      "contract": "TODO_FIND_FIRELIGHT"
+    }
+  },
+
+  "protocol_contracts": {
+    "flarebank_main": "0x194726F6C2aE988f1Ab5e1C943c17e591a6f6059",
+    "flarebank_ibdp": "0x90679234fe693b39bfdf5642060cb10571adc59b",
+    "enosys_v2_factory": "TODO",
+    "enosys_v3_factory": "0x17aa157ac8c54034381b840cb8f6bf7fc355f0de",
+    "enosys_v3_nft": "0xd9770b1c7a6ccd33c75b5bcb1c0078f46be46657"
+  },
+
+  "hypernative": {
+    "api_url": "https://api.hypernative.xyz/alerts",
+    "custom_agents": ["Mint Agent", "Burn Agent", "FB DAO WFLR Agent"],
+    "note": "Rate limited - cache responses, use backoff"
+  }
+}

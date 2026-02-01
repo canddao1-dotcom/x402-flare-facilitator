@@ -1,0 +1,20 @@
+[
+  {
+    "timestamp": 1769740240614,
+    "redemptionRate": 1.752705548966221,
+    "stakingRate": 0.5705464905898306,
+    "dexSellRate": 1.7487143477012834,
+    "dexBuyRate": 1.7592541761450489,
+    "stakeSellProfitBps": -22.77165874947862,
+    "opportunities": 0
+  },
+  {
+    "timestamp": 1769740584633,
+    "redemptionRate": 1.752705548966221,
+    "stakingRate": 0.5705464905898306,
+    "bestSellPrice": 1.7578981541995073,
+    "bestBuyPrice": 1.7582497689918264,
+    "stakeSellProfitBps": 29.62622692869843,
+    "opportunities": 1
+  }
+]

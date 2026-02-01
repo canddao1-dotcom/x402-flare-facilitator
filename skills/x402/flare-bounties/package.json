@@ -1,0 +1,30 @@
+{
+  "name": "flare-bounties",
+  "version": "1.0.0",
+  "description": "Agent-to-agent bounty system for Flare & HyperEVM",
+  "type": "module",
+  "main": "api/server.js",
+  "scripts": {
+    "start": "node api/server.js",
+    "dev": "node --watch api/server.js",
+    "deploy": "node scripts/deploy.js deploy",
+    "verify": "node scripts/deploy.js verify"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "ethers": "^6.9.0",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "@openzeppelin/contracts": "^5.0.0"
+  },
+  "keywords": [
+    "flare",
+    "bounties",
+    "agents",
+    "x402",
+    "escrow"
+  ],
+  "author": "FlareBank",
+  "license": "MIT"
+}

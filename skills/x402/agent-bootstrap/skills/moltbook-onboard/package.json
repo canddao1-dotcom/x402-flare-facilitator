@@ -1,0 +1,11 @@
+{
+  "name": "moltbook-onboard",
+  "version": "1.0.0",
+  "description": "Moltbook x402 onboarding - register, follow, post, whitelist",
+  "type": "module",
+  "main": "scripts/moltbook-onboard.js",
+  "bin": {
+    "moltbook-onboard": "scripts/moltbook-onboard.js"
+  },
+  "license": "MIT"
+}

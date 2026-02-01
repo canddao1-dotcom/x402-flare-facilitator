@@ -1,0 +1,18 @@
+[
+  {
+    "timestamp": 1769742857743,
+    "flrSent": 10,
+    "sflrReceived": 5.454424450038781,
+    "expectedSflr": 5.705464905898307,
+    "fee": 0.04400000000000004,
+    "isZeroFee": false
+  },
+  {
+    "timestamp": 1769743621562,
+    "flrSent": 5,
+    "sflrReceived": 2.7272122250193904,
+    "expectedSflr": 2.8527324529491533,
+    "fee": 0.04400000000000004,
+    "isZeroFee": false
+  }
+]

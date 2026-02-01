@@ -1,0 +1,50 @@
+# Private keys and wallets - NEVER COMMIT
+**/wallet*.json
+**/*-wallet*.json
+**/*-key*.json
+**/*-keystore*.json
+**/facilitator-key.json
+**/facilitator-wallet*.json
+**/facilitator-keystore*.json
+**/.facilitator-password
+facilitator/data/*.json
+facilitator/data/.*
+*.key
+*.pem
+.env
+.env.*
+*.env.local
+*.env.vercel
+
+# Wallet skill
+skills/wallet/test-wallet.json
+skills/wallet/*.json
+
+# Sensitive data files
+data/bounty-claims.json
+data/bounty-whitelist.json
+data/tip-stats.json
+facilitator/data/*.json
+
+# Secrets
+.secrets/
+
+# Node
+node_modules/
+.next/
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

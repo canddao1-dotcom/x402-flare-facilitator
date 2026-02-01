@@ -1,0 +1,24 @@
+{
+  "name": "fblpmanager",
+  "version": "1.1.0",
+  "description": "FlareBank LP Position Manager - monitoring, fee collection, and rebalancing",
+  "scripts": {
+    "monitor": "node scripts/lp-monitor.js",
+    "manager": "node scripts/lp-manager.js",
+    "wallet": "node scripts/wallet-manager.js",
+    "operations": "node scripts/lp-operations.js",
+    "rebalance": "node scripts/lp-rebalancer.js",
+    "daemon": "node scripts/lp-daemon.js",
+    "test": "node scripts/test-operations.js",
+    "wrap": "node scripts/wrap-flr.js",
+    "unwrap": "node scripts/unwrap-wflr.js",
+    "transfer": "node scripts/transfer.js"
+  },
+  "dependencies": {
+    "ethers": "^6.13.0",
+    "node-fetch": "^2.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
