@@ -1,0 +1,15 @@
+[
+  {
+    "txHash": "0x1df1d092b596273714a3d17abfd4ca19242850791be563b90977bef4f619f722",
+    "token": "FXRP",
+    "amount": "6.730757",
+    "recipient": "0xDb3556E7D9F7924713b81C1fe14C739A92F9ea9A",
+    "srcChain": "flare",
+    "dstChain": "hyperevm",
+    "timestamp": 1769798121,
+    "expectedDelivery": 1769798421,
+    "status": "likely_delivered",
+    "addedAt": 1769798350210,
+    "deliveredAt": 1769798444506
+  }
+]

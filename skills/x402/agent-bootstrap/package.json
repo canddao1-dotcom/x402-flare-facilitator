@@ -1,0 +1,17 @@
+{
+  "name": "agent-bootstrap",
+  "version": "1.0.0",
+  "description": "Bootstrap a new OpenClaw agent with multi-chain wallets",
+  "type": "module",
+  "main": "scripts/bootstrap.js",
+  "scripts": {
+    "bootstrap": "node scripts/bootstrap.js",
+    "verify": "node scripts/verify.js"
+  },
+  "dependencies": {
+    "viem": "^2.45.0",
+    "@solana/web3.js": "^1.95.0",
+    "bs58": "^6.0.0",
+    "tweetnacl": "^1.0.3"
+  }
+}

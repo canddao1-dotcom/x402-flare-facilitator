@@ -1,0 +1,9 @@
+{
+  "address": "0x12cf07728C74293f7Dd7a14931Cce6Ca09360127",
+  "owner": "0xDb3556E7D9F7924713b81C1fe14C739A92F9ea9A",
+  "feeRecipient": "0xDb3556E7D9F7924713b81C1fe14C739A92F9ea9A",
+  "feeBps": 100,
+  "deployedAt": "2026-01-31T05:37:37.519Z",
+  "network": "flare",
+  "chainId": 14
+}

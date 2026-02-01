@@ -1,0 +1,19 @@
+{
+  "name": "agent-tips",
+  "version": "0.1.0",
+  "description": "Fee sharing widget for AI agents - m/payments",
+  "scripts": {
+    "dev": "next dev -p 3456",
+    "build": "next build",
+    "start": "next start -p 3456"
+  },
+  "dependencies": {
+    "@rainbow-me/rainbowkit": "^2.2.10",
+    "@tanstack/react-query": "^5.90.20",
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "viem": "^2.45.1",
+    "wagmi": "^2.19.5"
+  }
+}

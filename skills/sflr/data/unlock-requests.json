@@ -1,0 +1,10 @@
+[
+  {
+    "index": 0,
+    "amount": "2.727",
+    "expectedFlr": "4.779628032030884816",
+    "timestamp": "2026-01-30T03:27:10.437Z",
+    "claimableAfter": "2026-02-13T15:27:10.437Z",
+    "txHash": "0xcce7700aeaeada1e5665fab60e659539682836d8e535805c51daac338e428e38"
+  }
+]

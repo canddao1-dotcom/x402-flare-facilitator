@@ -1,0 +1,51 @@
+{
+  "timestamp": 1769880551415,
+  "opportunities": [
+    {
+      "path": [
+        "WFLR",
+        "FXRP",
+        "USDT0",
+        "WFLR"
+      ],
+      "route": [
+        {
+          "from": "WFLR",
+          "to": "FXRP",
+          "dex": "Enosys",
+          "pool": "0xb4CB11a84CFbd8F6336Dc9417aC45c1F8E5B59E7",
+          "fee": 3000,
+          "amountIn": 100,
+          "amountOut": 0.581654543171082,
+          "rate": 0.00581654543171082
+        },
+        {
+          "from": "FXRP",
+          "to": "USDT0",
+          "dex": "Enosys",
+          "pool": "0x686f53F0950Ef193C887527eC027E6A574A4DbE1",
+          "fee": 3000,
+          "amountIn": 0.581654543171082,
+          "amountOut": 0.8987352747964011,
+          "rate": 1.54513582907244
+        },
+        {
+          "from": "USDT0",
+          "to": "WFLR",
+          "dex": "Enosys",
+          "pool": "0x3C2a7B76795E58829FAAa034486D417dd0155162",
+          "fee": 3000,
+          "amountIn": 0.8987352747964011,
+          "amountOut": 100.96188045285156,
+          "rate": 112.33772979003567
+        }
+      ],
+      "startAmount": 100,
+      "endAmount": 100.96188045285156,
+      "profit": 0.9618804528515597,
+      "profitPct": 0.9618804528515595,
+      "netProfitPct": 0.6618804528515596,
+      "timestamp": 1769880551415
+    }
+  ]
+}

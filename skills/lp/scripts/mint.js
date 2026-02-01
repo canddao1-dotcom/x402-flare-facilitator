@@ -1,0 +1,1 @@
+/home/node/clawd/skills/fblpmanager/scripts/mint-v3.js

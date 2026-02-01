@@ -1,0 +1,13 @@
+{
+  "name": "tip-splitter",
+  "version": "1.0.0",
+  "scripts": {
+    "compile": "hardhat compile",
+    "deploy": "hardhat run scripts/deploy.js --network flare"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.4.0",
+    "hardhat": "^2.22.0"
+  },
+  "type": "module"
+}

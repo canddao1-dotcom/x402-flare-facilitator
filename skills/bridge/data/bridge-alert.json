@@ -1,0 +1,9 @@
+{
+  "type": "bridge_delivery",
+  "message": "Bridge likely delivered: 6.730757 FXRP → hyperevm",
+  "txHash": "0x1df1d092b596273714a3d17abfd4ca19242850791be563b90977bef4f619f722",
+  "recipient": "0xDb3556E7D9F7924713b81C1fe14C739A92F9ea9A",
+  "elapsed": 5,
+  "timestamp": 1769798444506,
+  "read": false
+}

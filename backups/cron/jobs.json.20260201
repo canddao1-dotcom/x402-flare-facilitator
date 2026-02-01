@@ -1,0 +1,250 @@
+{
+  "version": 1,
+  "jobs": [
+    {
+      "id": "c282b11d-c3f8-4358-9ec9-fdbf9b76088d",
+      "agentId": "main",
+      "name": "LP Position Monitor",
+      "enabled": false,
+      "createdAtMs": 1769657588756,
+      "updatedAtMs": 1769869075117,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 0,6,12,18 * * *",
+        "tz": "UTC"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run LP position monitor:\n1. Execute: node /home/node/clawd/skills/fblpmanager/scripts/lp-manager.js --opportunities\n\nCRITICAL FORMAT RULES:\n- Show PRICES not ticks (e.g., \"Price: 0.0055 [0.0053 ↔ 0.0058] FXRP/WFLR\")\n- Follow format in skills/fblpmanager/SKILL.md exactly\n- Include 30d volatility stats for each position\n\nIf ANY position is OUT OF RANGE or NEAR EDGE:\n- Start with 🚨 **REBALANCE ALERT** header\n- Show current price and suggested rebalance range\n- Recommend immediate action\n\nIf all positions healthy, output normal report with opportunities.",
+        "deliver": true,
+        "channel": "telegram",
+        "to": "-1002180702192"
+      },
+      "state": {
+        "lastRunAtMs": 1769860800002,
+        "lastStatus": "ok",
+        "lastDurationMs": 45964
+      }
+    },
+    {
+      "id": "3ecec955-44bd-49d3-ba85-60fba70f59e4",
+      "agentId": "main",
+      "name": "FlareBank Dashboard",
+      "enabled": true,
+      "createdAtMs": 1769657632707,
+      "updatedAtMs": 1769657632707,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 * * 1",
+        "tz": "UTC"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run FlareBank dashboard: node /home/node/clawd/skills/flarebank/scripts/dashboard.js. Output ALL tables completely.",
+        "deliver": true,
+        "channel": "telegram",
+        "to": "-1002180702192"
+      },
+      "state": {
+        "nextRunAtMs": 1770022800000
+      }
+    },
+    {
+      "id": "0e7e1cd6-d244-4289-9328-4727f9da61b7",
+      "agentId": "main",
+      "name": "Daily Pool Stats Tweet",
+      "enabled": false,
+      "createdAtMs": 1769697034756,
+      "updatedAtMs": 1769869075140,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 18 * * *",
+        "tz": "UTC"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Execute this command and confirm the result: node /home/node/clawd/skills/x-post/scripts/scheduled-tweets.js --type daily-stats --confirm\n\nJust run the command - no additional commentary needed. If successful, reply 'Tweet posted'. If failed, report the error.",
+        "deliver": false
+      },
+      "state": {
+        "lastRunAtMs": 1769796018741,
+        "lastStatus": "ok",
+        "lastDurationMs": 7259
+      }
+    },
+    {
+      "id": "3a684bac-c7b6-4596-8df2-05857cf77e0f",
+      "agentId": "main",
+      "name": "Position Status Tweet",
+      "enabled": false,
+      "createdAtMs": 1769697034779,
+      "updatedAtMs": 1769869075182,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 12 * * 1,4",
+        "tz": "UTC"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Execute this command and confirm the result: node /home/node/clawd/skills/x-post/scripts/scheduled-tweets.js --type position-status --confirm\n\nJust run the command - no additional commentary needed. If successful, reply 'Tweet posted'. If failed, report the error.",
+        "deliver": false
+      },
+      "state": {}
+    },
+    {
+      "id": "ae730cab-f5ee-4c4b-83b4-6f6d28699906",
+      "agentId": "main",
+      "name": "Weekly Performance Tweet",
+      "enabled": false,
+      "createdAtMs": 1769697034795,
+      "updatedAtMs": 1769869075161,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 18 * * 0",
+        "tz": "UTC"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Execute this command and confirm the result: node /home/node/clawd/skills/x-post/scripts/scheduled-tweets.js --type weekly-performance --confirm\n\nJust run the command - no additional commentary needed. If successful, reply 'Tweet posted'. If failed, report the error.",
+        "deliver": false
+      },
+      "state": {}
+    },
+    {
+      "id": "b86f37c6-c8ca-4579-9b21-13020882e288",
+      "agentId": "main",
+      "name": "Portfolio Daily Tracker",
+      "enabled": true,
+      "createdAtMs": 1769727839716,
+      "updatedAtMs": 1769907600000,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 1 * * *",
+        "tz": "UTC"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run daily portfolio snapshots silently:\n1. node /home/node/clawd/skills/portfolio/scripts/tracker.js track\n2. node /home/node/clawd/skills/portfolio/scripts/tracker.js track dao\n\nNo output needed - just save snapshots.",
+        "deliver": false
+      },
+      "state": {
+        "nextRunAtMs": 1769994000000,
+        "lastRunAtMs": 1769907600000,
+        "lastStatus": "ok",
+        "lastDurationMs": 7946
+      }
+    },
+    {
+      "id": "5e629f10-2e37-4fef-95b4-ad97b8e2d4de",
+      "agentId": "main",
+      "name": "Daily Maintenance",
+      "enabled": true,
+      "createdAtMs": 1769744504162,
+      "updatedAtMs": 1769832000000,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 4 * * *",
+        "tz": "UTC"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run maintenance script: /home/node/clawd/scripts/maintenance.sh\nReport any issues found.",
+        "deliver": false
+      },
+      "state": {
+        "nextRunAtMs": 1769918400000,
+        "lastRunAtMs": 1769832000000,
+        "lastStatus": "ok",
+        "lastDurationMs": 8864
+      }
+    },
+    {
+      "id": "19c0433d-db8e-44ff-9fbc-3268b55cfe3c",
+      "agentId": "main",
+      "name": "Moltbook Engagement (2hr)",
+      "enabled": true,
+      "createdAtMs": 1769816115947,
+      "updatedAtMs": 1769911200001,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 */2 * * *",
+        "tz": "UTC"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Time to promote Agent Tips on Moltbook!\n\n1. Check GitHub for new PRs on canddao1-dotcom/x402-flare-facilitator (agent registrations)\n2. If new PR, merge it and celebrate on m/payments\n3. Browse /general and /new for posts about: payments, money, economy, new agents, infrastructure\n4. Comment on 2-3 relevant posts promoting Agent Tips:\n   - agent-tips.vercel.app\n   - Register via PR for free gas money\n   - $200+ in facilitator ready to deploy\n   - TipSplitter contract: 0x12cf07728C74293f7Dd7a14931Cce6Ca09360127\n5. If cooldown allows, post in /general about Agent Tips\n\nAPI: curl -sL -X POST 'https://www.moltbook.com/api/v1/posts/POST_ID/comments' -H 'Authorization: Bearer moltbook_sk_yTt_QqGycYwJjOFZ911tBFns2Sqp_4-K' -H 'Content-Type: application/json' -d '{\"content\": \"...\"}'\n\nBe authentic, vary the messaging, target different agent types.",
+        "deliver": false
+      },
+      "state": {
+        "nextRunAtMs": 1769918400000,
+        "lastRunAtMs": 1769911200001,
+        "lastStatus": "ok",
+        "lastDurationMs": 159713
+      }
+    },
+    {
+      "id": "c66bbcd4-9668-4ae9-aaae-257f65268d57",
+      "agentId": "main",
+      "name": "Post to m/xrplevm",
+      "enabled": true,
+      "createdAtMs": 1769828481364,
+      "updatedAtMs": 1769830200001,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 3 31 1 *",
+        "tz": "UTC"
+      },
+      "sessionTarget": "main",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "systemEvent",
+        "text": "REMINDER: Post to m/xrplevm NOW! FXRP as payment token in agent economy. Powered by Flare Network - largest XRPFi ecosystem. FXRP on Flare + HyperEVM. Free tip pool for registered agents."
+      },
+      "state": {
+        "nextRunAtMs": 1801366200000,
+        "lastRunAtMs": 1769830200002,
+        "lastStatus": "ok",
+        "lastDurationMs": 9
+      }
+    },
+    {
+      "id": "de73836f-4d96-4b9b-9a7c-09c366a29373",
+      "agentId": "main",
+      "name": "moltbook-introductions-post",
+      "enabled": false,
+      "createdAtMs": 1769875023900,
+      "updatedAtMs": 1769875200000,
+      "schedule": {
+        "kind": "at",
+        "atMs": 1769875200000
+      },
+      "sessionTarget": "main",
+      "wakeMode": "next-heartbeat",
+      "payload": {
+        "kind": "systemEvent",
+        "text": "Post to m/introductions on Moltbook about Agent Tips. Content: Free USDT tipping system, 3 agents onboard, 400+ USDT sent, links to leaderboard and registration."
+      },
+      "state": {
+        "lastRunAtMs": 1769875515800,
+        "lastStatus": "ok",
+        "lastDurationMs": 1
+      }
+    }
+  ]
+}

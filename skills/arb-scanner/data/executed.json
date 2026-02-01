@@ -1,0 +1,361 @@
+[
+  {
+    "timestamp": 1769737433453,
+    "alert": {
+      "timestamp": 1769737359138,
+      "type": "arb_opportunity",
+      "profit": 2.655757787983501,
+      "path": [
+        "WFLR",
+        "sFLR",
+        "USDT0",
+        "WFLR"
+      ],
+      "route": [
+        {
+          "from": "WFLR",
+          "to": "sFLR",
+          "dex": "Enosys",
+          "pool": "0x71f62232D470f87ad8DB616fb68b0a69B5A3b594",
+          "fee": 10000,
+          "amountIn": 100,
+          "amountOut": 58.44675438675546,
+          "rate": 0.5844675438675546
+        },
+        {
+          "from": "sFLR",
+          "to": "USDT0",
+          "dex": "Blazeswap",
+          "pool": "0x3db0829F045D659Acd5F0563C13b4D723B940c25",
+          "fee": 3000,
+          "amountIn": 58.44675438675546,
+          "amountOut": 1.0475299994447826,
+          "rate": 0.01792280872455361
+        },
+        {
+          "from": "USDT0",
+          "to": "WFLR",
+          "dex": "Blazeswap",
+          "pool": "0x5eD30e42757E3edd2f898FbcA26Cd7c6f391Ae1C",
+          "fee": 3000,
+          "amountIn": 1.0475299994447826,
+          "amountOut": 102.9557577879835,
+          "rate": 98.28430483380204
+        }
+      ],
+      "read": true
+    },
+    "result": {
+      "success": false,
+      "error": "Unknown token: sFLR"
+    }
+  },
+  {
+    "timestamp": 1769737463688,
+    "alert": {
+      "timestamp": 1769737359138,
+      "type": "arb_opportunity",
+      "profit": 2.655757787983501,
+      "path": [
+        "WFLR",
+        "sFLR",
+        "USDT0",
+        "WFLR"
+      ],
+      "route": [
+        {
+          "from": "WFLR",
+          "to": "sFLR",
+          "dex": "Enosys",
+          "pool": "0x71f62232D470f87ad8DB616fb68b0a69B5A3b594",
+          "fee": 10000,
+          "amountIn": 100,
+          "amountOut": 58.44675438675546,
+          "rate": 0.5844675438675546
+        },
+        {
+          "from": "sFLR",
+          "to": "USDT0",
+          "dex": "Blazeswap",
+          "pool": "0x3db0829F045D659Acd5F0563C13b4D723B940c25",
+          "fee": 3000,
+          "amountIn": 58.44675438675546,
+          "amountOut": 1.0475299994447826,
+          "rate": 0.01792280872455361
+        },
+        {
+          "from": "USDT0",
+          "to": "WFLR",
+          "dex": "Blazeswap",
+          "pool": "0x5eD30e42757E3edd2f898FbcA26Cd7c6f391Ae1C",
+          "fee": 3000,
+          "amountIn": 1.0475299994447826,
+          "amountOut": 102.9557577879835,
+          "rate": 98.28430483380204
+        }
+      ],
+      "read": true
+    },
+    "result": {
+      "success": false,
+      "error": "missing revert data (action=\"estimateGas\", data=null, reason=null, transaction={ \"data\": \"0x04e45aaf0000000000000000000000001d80c49bbbcd1c0911346656b529df9e5c2f783d00000000000000000000000012e605bc104e93b45e1ad99f9e555f659051c2bb00000000000000000000000000000000000000000000000000000000000027100000000000000000000000000dfa93560e0dcff78f7e3985826e42e53e9493cc0000000000000000000000000000000000000000000000056bc75e2d631000000000000000000000000000000000000000000000000000055005f0c6144800000000000000000000000000000000000000000000000000000000000000000000\", \"from\": \"0xDb3556E7D9F7924713b81C1fe14C739A92F9ea9A\", \"to\": \"0x5FD34090E9b195d8482Ad3CC63dB078534F1b113\" }, invocation=null, revert=null, code=CALL_EXCEPTION, version=6.16.0)"
+    }
+  },
+  {
+    "timestamp": 1769737521397,
+    "alert": {
+      "timestamp": 1769737359138,
+      "type": "arb_opportunity",
+      "profit": 2.655757787983501,
+      "path": [
+        "WFLR",
+        "sFLR",
+        "USDT0",
+        "WFLR"
+      ],
+      "route": [
+        {
+          "from": "WFLR",
+          "to": "sFLR",
+          "dex": "Enosys",
+          "pool": "0x71f62232D470f87ad8DB616fb68b0a69B5A3b594",
+          "fee": 10000,
+          "amountIn": 100,
+          "amountOut": 58.44675438675546,
+          "rate": 0.5844675438675546
+        },
+        {
+          "from": "sFLR",
+          "to": "USDT0",
+          "dex": "Blazeswap",
+          "pool": "0x3db0829F045D659Acd5F0563C13b4D723B940c25",
+          "fee": 3000,
+          "amountIn": 58.44675438675546,
+          "amountOut": 1.0475299994447826,
+          "rate": 0.01792280872455361
+        },
+        {
+          "from": "USDT0",
+          "to": "WFLR",
+          "dex": "Blazeswap",
+          "pool": "0x5eD30e42757E3edd2f898FbcA26Cd7c6f391Ae1C",
+          "fee": 3000,
+          "amountIn": 1.0475299994447826,
+          "amountOut": 102.9557577879835,
+          "rate": 98.28430483380204
+        }
+      ],
+      "read": true
+    },
+    "result": {
+      "success": false,
+      "error": "missing revert data (action=\"estimateGas\", data=null, reason=null, transaction={ \"data\": \"0x04e45aaf0000000000000000000000001d80c49bbbcd1c0911346656b529df9e5c2f783d00000000000000000000000012e605bc104e93b45e1ad99f9e555f659051c2bb00000000000000000000000000000000000000000000000000000000000027100000000000000000000000000dfa93560e0dcff78f7e3985826e42e53e9493cc0000000000000000000000000000000000000000000000056bc75e2d631000000000000000000000000000000000000000000000000000031ae3b12e7b1f25500000000000000000000000000000000000000000000000000000000000000000\", \"from\": \"0xDb3556E7D9F7924713b81C1fe14C739A92F9ea9A\", \"to\": \"0x5FD34090E9b195d8482Ad3CC63dB078534F1b113\" }, invocation=null, revert=null, code=CALL_EXCEPTION, version=6.16.0)"
+    }
+  },
+  {
+    "timestamp": 1769737745257,
+    "alert": {
+      "timestamp": 1769737359138,
+      "type": "arb_opportunity",
+      "profit": 2.655757787983501,
+      "path": [
+        "WFLR",
+        "sFLR",
+        "USDT0",
+        "WFLR"
+      ],
+      "route": [
+        {
+          "from": "WFLR",
+          "to": "sFLR",
+          "dex": "Enosys",
+          "pool": "0x71f62232D470f87ad8DB616fb68b0a69B5A3b594",
+          "fee": 10000,
+          "amountIn": 100,
+          "amountOut": 58.44675438675546,
+          "rate": 0.5844675438675546
+        },
+        {
+          "from": "sFLR",
+          "to": "USDT0",
+          "dex": "Blazeswap",
+          "pool": "0x3db0829F045D659Acd5F0563C13b4D723B940c25",
+          "fee": 3000,
+          "amountIn": 58.44675438675546,
+          "amountOut": 1.0475299994447826,
+          "rate": 0.01792280872455361
+        },
+        {
+          "from": "USDT0",
+          "to": "WFLR",
+          "dex": "Blazeswap",
+          "pool": "0x5eD30e42757E3edd2f898FbcA26Cd7c6f391Ae1C",
+          "fee": 3000,
+          "amountIn": 1.0475299994447826,
+          "amountOut": 102.9557577879835,
+          "rate": 98.28430483380204
+        }
+      ],
+      "read": true
+    },
+    "result": {
+      "success": false,
+      "error": "Leg 2 failed: Command failed: node /home/node/clawd/skills/wallet/scripts/swap-blazeswap.js swap --keystore /home/node/clawd/skills/fblpmanager/data/clawd-wallet.json --from SFLR --to USDT0 --amount 0 --slippage 3\n❌ Missing required arguments: --from, --to, --amount\n"
+    }
+  },
+  {
+    "timestamp": 1769739144440,
+    "alert": {
+      "timestamp": 1769738445479,
+      "type": "arb_opportunity",
+      "profit": 2.3898704927143344,
+      "path": [
+        "WFLR",
+        "sFLR",
+        "USDT0",
+        "WFLR"
+      ],
+      "route": [
+        {
+          "from": "WFLR",
+          "to": "sFLR",
+          "dex": "Enosys",
+          "pool": "0x71f62232D470f87ad8DB616fb68b0a69B5A3b594",
+          "fee": 10000,
+          "amountIn": 100,
+          "amountOut": 58.44675438675546,
+          "rate": 0.5844675438675546
+        },
+        {
+          "from": "sFLR",
+          "to": "USDT0",
+          "dex": "Blazeswap",
+          "pool": "0x3db0829F045D659Acd5F0563C13b4D723B940c25",
+          "fee": 3000,
+          "amountIn": 58.44675438675546,
+          "amountOut": 1.0346924117010852,
+          "rate": 0.017703162862633747
+        },
+        {
+          "from": "USDT0",
+          "to": "WFLR",
+          "dex": "Blazeswap",
+          "pool": "0x5eD30e42757E3edd2f898FbcA26Cd7c6f391Ae1C",
+          "fee": 3000,
+          "amountIn": 1.0346924117010852,
+          "amountOut": 102.68987049271433,
+          "rate": 99.24676100009967
+        }
+      ],
+      "read": true
+    },
+    "result": {
+      "success": false,
+      "error": "Leg 2 failed: Command failed: node /home/node/clawd/skills/wallet/scripts/swap-blazeswap.js swap --keystore /home/node/clawd/skills/fblpmanager/data/clawd-wallet.json --from SFLR --to USDT0 --amount 0 --slippage 3\n❌ Missing required arguments: --from, --to, --amount\n"
+    }
+  },
+  {
+    "timestamp": 1769739194143,
+    "alert": {
+      "timestamp": 1769739200000,
+      "type": "arb_opportunity",
+      "profit": -1.5,
+      "path": [
+        "WFLR",
+        "FXRP",
+        "USDT0",
+        "WFLR"
+      ],
+      "route": [
+        {
+          "from": "WFLR",
+          "to": "FXRP",
+          "dex": "Enosys",
+          "pool": "0xC9681De030dF9f9256852a4C6133e3c45F0e2C69",
+          "fee": 3000,
+          "amountIn": 10,
+          "amountOut": 0.58,
+          "rate": 0.058
+        },
+        {
+          "from": "FXRP",
+          "to": "USDT0",
+          "dex": "Enosys",
+          "pool": "0xd18AdC8CAfE44A460CAddA377FE8A481B865C2Ed",
+          "fee": 500,
+          "amountIn": 0.58,
+          "amountOut": 0.095,
+          "rate": 0.164
+        },
+        {
+          "from": "USDT0",
+          "to": "WFLR",
+          "dex": "Blazeswap",
+          "pool": "0x5eD30e42757E3edd2f898FbcA26Cd7c6f391Ae1C",
+          "fee": 3000,
+          "amountIn": 0.095,
+          "amountOut": 9.5,
+          "rate": 100
+        }
+      ],
+      "read": true,
+      "test": true
+    },
+    "result": {
+      "success": false,
+      "error": "Leg 2 failed: Command failed: node /home/node/clawd/skills/wallet/scripts/swap-v3.js swap --keystore /home/node/clawd/skills/fblpmanager/data/clawd-wallet.json --from FXRP --to USDT0 --amount 0.056966 --fee 500 --slippage 3\nUnknown token\n"
+    }
+  },
+  {
+    "timestamp": 1769739233375,
+    "alert": {
+      "timestamp": 1769739400000,
+      "type": "arb_opportunity",
+      "profit": -2,
+      "path": [
+        "WFLR",
+        "sFLR",
+        "FXRP",
+        "WFLR"
+      ],
+      "route": [
+        {
+          "from": "WFLR",
+          "to": "sFLR",
+          "dex": "Enosys",
+          "pool": "0x71f62232D470f87ad8DB616fb68b0a69B5A3b594",
+          "fee": 10000,
+          "amountIn": 10,
+          "amountOut": 5.8,
+          "rate": 0.58
+        },
+        {
+          "from": "sFLR",
+          "to": "FXRP",
+          "dex": "SparkDex",
+          "pool": "0x80cfCA4C8E691F771BB8beb8B28a770c6e8e7E2b",
+          "fee": 3000,
+          "amountIn": 5.8,
+          "amountOut": 0.33,
+          "rate": 0.057
+        },
+        {
+          "from": "FXRP",
+          "to": "WFLR",
+          "dex": "Enosys",
+          "pool": "0xC9681De030dF9f9256852a4C6133e3c45F0e2C69",
+          "fee": 3000,
+          "amountIn": 0.33,
+          "amountOut": 9.5,
+          "rate": 28.8
+        }
+      ],
+      "read": true,
+      "test": true
+    },
+    "result": {
+      "success": false,
+      "error": "Leg 2 failed: Command failed: node /home/node/clawd/skills/wallet/scripts/swap-sparkdex.js swap --keystore /home/node/clawd/skills/fblpmanager/data/clawd-wallet.json --from SFLR --to FXRP --amount 0 --fee 3000 --slippage 3\n\n❌ Swap failed: execution reverted: \"AS\" (action=\"estimateGas\", data=\"0x08c379a0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000024153000000000000000000000000000000000000000000000000000000000000\", reason=\"AS\", transaction={ \"data\": \"0x414bf38900000000000000000000000012e605bc104e93b45e1ad99f9e555f659051c2bb000000000000000000000000ad552a648c74d49e10027ab8a618a3ad4901c5be0000000000000000000000000000000000000000000000000000000000000bb80000000000000000000000000dfa93560e0dcff78f7e3985826e42e53e9493cc00000000000000000000000000000000000000000000000000000000697c1639000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\", \"from\": \"0xDb3556E7D9F7924713b81C1fe14C739A92F9ea9A\", \"to\": \"0x8a1E35F5c98C4E85B36B7B253222eE17773b2781\" }, invocation=null, revert={ \"args\": [ \"AS\" ], \"name\": \"Error\", \"signature\": \"Error(string)\" }, code=CALL_EXCEPTION, version=6.16.0)\n   Data: 0x08c379a0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000024153000000000000000000000000000000000000000000000000000000000000\n"
+    }
+  }
+]

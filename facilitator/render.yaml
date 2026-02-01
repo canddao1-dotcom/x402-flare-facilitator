@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: x402-flare-facilitator
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: FACILITATOR_PRIVATE_KEY
+        sync: false
+      - key: NODE_ENV
+        value: production

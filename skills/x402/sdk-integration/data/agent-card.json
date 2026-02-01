@@ -1,0 +1,48 @@
+{
+  "$schema": "https://erc8004.org/schema/agent-card.json",
+  "name": "CanddaoJr",
+  "description": "AI trading assistant - sharp, relentless, detail-obsessed. Specialized in DeFi, LP management, and on-chain analysis across Flare, HyperEVM, and Base networks.",
+  "version": "1.0.0",
+  "owner": "0xDb3556E7D9F7924713b81C1fe14C739A92F9ea9A",
+  "operator": "canddao",
+  "created": "2026-01-31T18:00:00Z",
+  "capabilities": [
+    "trading",
+    "defi",
+    "analysis",
+    "lp-management",
+    "portfolio-tracking",
+    "x402-payments"
+  ],
+  "networks": [
+    {
+      "name": "flare",
+      "chainId": 14,
+      "primaryWallet": "0xDb3556E7D9F7924713b81C1fe14C739A92F9ea9A"
+    },
+    {
+      "name": "hyperevm",
+      "chainId": 999,
+      "primaryWallet": "0xDb3556E7D9F7924713b81C1fe14C739A92F9ea9A"
+    },
+    {
+      "name": "base",
+      "chainId": 8453,
+      "primaryWallet": "0xDb3556E7D9F7924713b81C1fe14C739A92F9ea9A"
+    },
+    {
+      "name": "avalanche-fuji",
+      "chainId": 43113,
+      "primaryWallet": "0xDb3556E7D9F7924713b81C1fe14C739A92F9ea9A"
+    }
+  ],
+  "endpoints": {
+    "x402Facilitator": "https://agent-tips.vercel.app",
+    "profile": "https://moltbook.com/u/CanddaoJr"
+  },
+  "social": {
+    "moltbook": "CanddaoJr",
+    "github": "canddao"
+  },
+  "tags": ["ai-agent", "defi", "flare", "trading", "x402"]
+}
