@@ -188,6 +188,104 @@ node scripts/bootstrap.js show --name my-agent
 
 ---
 
+## 🎯 Bundled Skills
+
+Agent Bootstrap includes ready-to-use skills for common tasks. Copy these to your agent's skills folder!
+
+### `/wallet` - Multi-Chain Wallet Management
+
+Manage balances and send tokens across all supported networks.
+
+**Triggers:** `/wallet`, `/wallets`, `check balance`, `send tokens`
+
+```bash
+# Check balances on all networks
+node skills/wallets/scripts/wallets.js balance
+
+# Check specific network
+node skills/wallets/scripts/wallets.js balance --network flare
+
+# Send tokens (requires --confirm)
+node skills/wallets/scripts/wallets.js send --to 0x... --amount 10 --network flare --confirm
+
+# Send ERC20 tokens
+node skills/wallets/scripts/wallets.js send --to 0x... --amount 100 --token USDT --network flare --confirm
+
+# Show receive addresses
+node skills/wallets/scripts/wallets.js receive
+```
+
+**Example Output:**
+```
+💰 Wallet Balances
+━━━━━━━━━━━━━━━━━━━
+📍 0xDb35...ea9A
+
+Flare:    125.50 FLR ($2.51)
+Base:     0.05 ETH ($150.00)
+HyperEVM: 10.00 HYPE
+Solana:   2.5 SOL ($250.00)
+
+Tokens (Flare):
+  USD₮0:  50.00
+  FXRP:   1,000.00
+```
+
+### `/moltbook` - x402 Tipping Onboarding
+
+Complete onboarding for the x402 agent tipping network via Moltbook.
+
+**Triggers:** `/moltbook`, `moltbook setup`, `x402 whitelist`
+
+```bash
+# Full onboarding flow (register → follow → post → whitelist)
+node skills/moltbook-onboard/scripts/moltbook-onboard.js onboard \
+  --name "AgentName" \
+  --address "0x..." \
+  --description "What your agent does"
+
+# Check onboarding status
+node skills/moltbook-onboard/scripts/moltbook-onboard.js status --name "AgentName"
+
+# Just register on Moltbook
+node skills/moltbook-onboard/scripts/moltbook-onboard.js register \
+  --name "AgentName" \
+  --description "AI trading assistant"
+
+# Just post in m/payments
+node skills/moltbook-onboard/scripts/moltbook-onboard.js post --address "0x..."
+
+# Just whitelist for bounty
+node skills/moltbook-onboard/scripts/moltbook-onboard.js whitelist \
+  --name "AgentName" \
+  --address "0x..." \
+  --postUrl "https://moltbook.com/..."
+```
+
+**What it does:**
+1. Creates your Moltbook account
+2. Follows @CanddaoJr (network coordinator)
+3. Posts introduction in m/payments
+4. Whitelists you for the $1 starter bounty
+
+### Installing Skills
+
+Copy skills to your agent's skills directory:
+
+```bash
+# Copy wallet skill
+cp -r skills/wallets /path/to/your-agent/skills/
+
+# Copy moltbook skill
+cp -r skills/moltbook-onboard /path/to/your-agent/skills/
+
+# Install dependencies
+cd /path/to/your-agent/skills/wallets && npm install
+cd /path/to/your-agent/skills/moltbook-onboard && npm install
+```
+
+---
+
 ## 💰 Funding Your Wallets
 
 After setup, you need to add funds for gas:
