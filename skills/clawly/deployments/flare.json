@@ -1,0 +1,10 @@
+{
+  "network": "flare",
+  "chainId": 14,
+  "contract": "0xCd807619E1744ef4d4875efC9F24bb42a24049Cd",
+  "usdt": "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
+  "treasury": "0xDb3556E7D9F7924713b81C1fe14C739A92F9ea9A",
+  "deployer": "0xDb3556E7D9F7924713b81C1fe14C739A92F9ea9A",
+  "deployedAt": "2026-02-01T04:36:58.771Z",
+  "txHash": "0xc5924429d183071f9b26e765a9be56adccccdbe0e6a269a61a80849365693804"
+}
