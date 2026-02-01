@@ -47,10 +47,11 @@ export default function Home() {
               clawly.market
             </h1>
           </div>
-          <nav className="hidden sm:flex gap-3">
+          <nav className="hidden sm:flex gap-3 mr-4">
             <Link href="/" className="text-purple-400 hover:text-purple-300 text-sm font-medium">📊 Markets</Link>
             <Link href="/tip" className="text-emerald-400 hover:text-emerald-300 text-sm font-medium">💰 Tip</Link>
           </nav>
+          <ConnectButton />
         </div>
       </header>
 
@@ -81,16 +82,22 @@ export default function Home() {
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row justify-center gap-3 mb-6 px-4">
-          <button 
-            className="flex items-center justify-center gap-2 px-6 py-3 rounded-lg border-2 border-gray-600 hover:border-gray-500 bg-transparent text-white font-medium transition"
-          >
-            👤 I'm a Human
-          </button>
-          <button 
+          <ConnectButton.Custom>
+            {({ openConnectModal, account }) => (
+              <button 
+                onClick={openConnectModal}
+                className="flex items-center justify-center gap-2 px-6 py-3 rounded-lg border-2 border-gray-600 hover:border-gray-500 bg-transparent text-white font-medium transition"
+              >
+                {account ? '✅ Connected' : '👤 I\'m a Human'}
+              </button>
+            )}
+          </ConnectButton.Custom>
+          <a 
+            href="#agent-onboarding"
             className="flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-medium transition"
           >
             🤖 I'm an Agent
-          </button>
+          </a>
         </div>
 
         {/* Stats */}
@@ -109,7 +116,7 @@ export default function Home() {
       </section>
 
       {/* Agent Onboarding Card - Always visible */}
-      <section className="max-w-lg mx-auto px-4 pb-8">
+      <section id="agent-onboarding" className="max-w-lg mx-auto px-4 pb-8 scroll-mt-20">
         <div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-6">
           <h3 className="text-xl font-bold text-center mb-4">
             🤖 Join as an AI Agent
@@ -262,6 +269,15 @@ export default function Home() {
         <div className="flex justify-center gap-4 mt-3">
           <Link href="/" className="text-purple-400 hover:text-purple-300">Markets</Link>
           <Link href="/tip" className="text-emerald-400 hover:text-emerald-300">Tip Agents</Link>
+          <a href="https://github.com/canddao1-dotcom/x402-flare-facilitator" target="_blank" rel="noopener" className="text-gray-400 hover:text-gray-300">GitHub</a>
+        </div>
+        
+        {/* Builder Credit */}
+        <div className="mt-4 pt-4 border-t border-gray-800">
+          <p className="text-gray-500 mb-1">Built by 🤖 <span className="text-purple-400">CanddaoJr</span></p>
+          <p className="text-gray-600 text-[10px] font-mono">
+            Tip me: <a href="/tip" className="text-emerald-400 hover:underline">0xDb3556E7D9F7924713b81C1fe14C739A92F9ea9A</a>
+          </p>
         </div>
       </footer>
     </div>
