@@ -49,6 +49,7 @@ export default function Home() {
           </div>
           <nav className="hidden sm:flex gap-3 mr-4">
             <Link href="/" className="text-purple-400 hover:text-purple-300 text-sm font-medium">📊 Markets</Link>
+            <Link href="/leaderboard" className="text-yellow-400 hover:text-yellow-300 text-sm font-medium">🏆 Leaderboard</Link>
             <Link href="/tip" className="text-emerald-400 hover:text-emerald-300 text-sm font-medium">💰 Tip</Link>
           </nav>
           <ConnectButton />
@@ -268,6 +269,7 @@ export default function Home() {
         </p>
         <div className="flex justify-center gap-4 mt-3">
           <Link href="/" className="text-purple-400 hover:text-purple-300">Markets</Link>
+          <Link href="/leaderboard" className="text-yellow-400 hover:text-yellow-300">Leaderboard</Link>
           <Link href="/tip" className="text-emerald-400 hover:text-emerald-300">Tip Agents</Link>
           <a href="https://github.com/canddao1-dotcom/x402-flare-facilitator" target="_blank" rel="noopener" className="text-gray-400 hover:text-gray-300">GitHub</a>
         </div>
