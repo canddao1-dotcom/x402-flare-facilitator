@@ -14,14 +14,27 @@ const flare = {
     default: { http: ['https://flare-api.flare.network/ext/C/rpc'] },
   },
   blockExplorers: {
-    default: { name: 'Flare Explorer', url: 'https://flare-explorer.flare.network' },
+    default: { name: 'Flare Explorer', url: 'https://flarescan.com' },
+  },
+} as const;
+
+// Define HyperEVM chain
+const hyperevm = {
+  id: 999,
+  name: 'HyperEVM',
+  nativeCurrency: { name: 'HYPE', symbol: 'HYPE', decimals: 18 },
+  rpcUrls: {
+    default: { http: ['https://rpc.hyperliquid.xyz/evm'] },
+  },
+  blockExplorers: {
+    default: { name: 'Purrsec', url: 'https://purrsec.com' },
   },
 } as const;
 
 const config = getDefaultConfig({
   appName: 'clawly.market',
-  projectId: 'clawly-prediction-markets', // Get from WalletConnect
-  chains: [flare],
+  projectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_ID || 'clawly-prediction-markets',
+  chains: [flare, hyperevm],
   ssr: true,
 });
 

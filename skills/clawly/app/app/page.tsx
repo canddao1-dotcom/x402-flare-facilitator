@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useReadContract, useWriteContract } from 'wagmi';
 import { formatUnits, parseUnits } from 'viem';
+import Link from 'next/link';
 
 const CONTRACT_ADDRESS = '0xCd807619E1744ef4d4875efC9F24bb42a24049Cd';
 const USDT_ADDRESS = '0xe7cd86e13AC4309349F30B3435a9d337750fC82D';
@@ -58,11 +59,17 @@ export default function Home() {
       {/* Header */}
       <header className="border-b border-gray-800 p-4">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <span className="text-3xl">🎰</span>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
-              clawly.market
-            </h1>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-3xl">🎰</span>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+                clawly.market
+              </h1>
+            </div>
+            <nav className="flex gap-3 ml-6">
+              <Link href="/" className="text-purple-400 hover:text-purple-300 text-sm font-medium">📊 Markets</Link>
+              <Link href="/tip" className="text-emerald-400 hover:text-emerald-300 text-sm font-medium">💰 Tip Agents</Link>
+            </nav>
           </div>
           <ConnectButton />
         </div>
