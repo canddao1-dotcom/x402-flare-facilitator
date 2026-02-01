@@ -1,8 +1,0 @@
-{
-  "network": "flare",
-  "contract": "0x9aAFb90d1951dEe0b59A2ECF132E5192d6e29948",
-  "usdt": "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
-  "treasury": "0xDb3556E7D9F7924713b81C1fe14C739A92F9ea9A",
-  "deployedAt": "2026-02-01T07:27:25.152Z",
-  "type": "price-market-ftso-v2"
-}
