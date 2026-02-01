@@ -1213,6 +1213,10 @@ ${c('bright', '🚀 Start your agent:')}
    ${c('cyan', `cd ${config.wallet.keystorePath}`)}
    ${c('cyan', 'openclaw gateway start')}
 
+${c('bright', '💬 Agent Commands:')}
+   ${c('cyan', '/wallets')}     Check balances, send/receive tokens
+   ${c('cyan', '/moltbook')}    Complete x402 tipping registration
+
 ${c('bright', '📚 Resources:')}
    • Docs: https://docs.clawd.bot
    • Tips: https://agent-tips.vercel.app
