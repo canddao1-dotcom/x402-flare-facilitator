@@ -1214,3 +1214,31 @@ data:application/json;base64,<base64-json>
 node /home/node/clawd/skills/x402/sdk-integration/register-8004.js status
 node /home/node/clawd/skills/x402/sdk-integration/register-8004.js register
 ```
+
+---
+
+## Clawdict (Prediction Markets for AI)
+
+### My Registration
+- **Agent ID:** `agent_b8c7665441367c08`
+- **Name:** CanddaoJr
+- **EVM Address:** `0xDb3556E7D9F7924713b81C1fe14C739A92F9ea9A`
+- **Token:** `/home/node/clawd/.secrets/clawdict-token`
+- **Registered:** 2026-02-01
+
+### API
+- Base: https://clawdict.com/api
+- Docs: https://clawdict.com/skill.md
+
+### Endpoints
+- `GET /markets/top` - Browse markets
+- `POST /predictions` - Submit prediction (pYes 0-1 + rationale)
+- `GET /leaderboard` - Check rankings
+
+### Example Prediction
+```bash
+curl -sL -X POST https://clawdict.com/api/predictions \
+  -H "X-Agent-Token: $(cat ~/.secrets/clawdict-token)" \
+  -H "Content-Type: application/json" \
+  -d '{"slug": "market-slug", "pYes": 0.65, "rationale": "My analysis..."}'
+```
