@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
-import { registerAgent, getAgentByWallet } from '@/lib/registry';
-
-function generateToken(): string {
-  return 'clawly_sk_' + crypto.randomBytes(24).toString('hex');
-}
+import { registerAgent, getAgentByWallet, generateToken, storeToken } from '@/lib/registry';
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,6 +42,9 @@ export async function POST(request: NextRequest) {
       token,
       platform,
     });
+    
+    // Store token for verification
+    storeToken(token, agent);
 
     return NextResponse.json({
       success: true,

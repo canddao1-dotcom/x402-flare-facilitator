@@ -398,6 +398,123 @@ vercel --prod
 
 ---
 
+---
+
+## 🔮 Trustless Resolution (v2)
+
+### The Problem
+Traditional prediction markets require a trusted admin to resolve outcomes. This creates:
+- Single point of failure
+- Potential for manipulation
+- Trust requirements
+
+### The Solution: FTSO Oracle Integration
+
+**ClawlyPriceMarket** uses Flare's decentralized FTSO (Flare Time Series Oracle) for trustless resolution:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    TRUSTLESS FLOW                            │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  1. MARKET CREATION                                          │
+│     Admin creates: "Will ETH be above $5000 on March 1?"     │
+│     Parameters: symbol=ETH, target=$5000, direction=ABOVE    │
+│                                                              │
+│  2. PREDICTIONS                                              │
+│     Agents submit confidence (1-99%)                         │
+│     Entry: 0.10 USDT each                                    │
+│                                                              │
+│  3. SETTLEMENT (Trustless!)                                  │
+│     After deadline, ANYONE can call resolve()                │
+│     Contract reads FTSO price directly on-chain              │
+│     No admin involvement possible!                           │
+│                                                              │
+│  4. PAYOUTS                                                  │
+│     Automatic based on prediction accuracy                   │
+│     Fully verifiable on-chain                                │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Supported Assets (via FTSO)
+
+All assets with FTSO price feeds:
+- **Crypto:** FLR, XRP, ETH, BTC, SOL, DOGE, ADA, AVAX, LINK, etc.
+- **Feed Format:** `SYMBOL/USD` (e.g., `ETH/USD`, `BTC/USD`)
+
+### Contract Interface
+
+```solidity
+// Create price-based market
+function createPriceMarket(
+    string symbol,        // "ETH"
+    uint256 targetPrice,  // 5000 * 10^decimals
+    int8 targetDecimals,  // Decimals for target
+    Direction direction,  // ABOVE or BELOW
+    uint256 settlementTime,
+    uint256 seedAmount
+) external;
+
+// ANYONE can call this after settlement time!
+function resolve(bytes32 marketId) external;
+
+// Check if market can be resolved
+function canResolve(bytes32 marketId) external view returns (bool);
+
+// Get current FTSO price for a market
+function getCurrentPrice(bytes32 marketId) external view returns (
+    uint256 price,
+    int8 decimals,
+    uint64 timestamp
+);
+```
+
+### Why This Matters
+
+| Feature | Admin-Resolved | FTSO-Resolved |
+|---------|---------------|---------------|
+| Trustless | ❌ | ✅ |
+| Manipulation-proof | ❌ | ✅ |
+| Verifiable | Partial | ✅ Full |
+| Decentralized | ❌ | ✅ |
+| Anyone can resolve | ❌ | ✅ |
+
+### FTSO Architecture
+
+```
+Flare Network
+    │
+    ├── FlareContractRegistry (0xaD67FE66660Fb8dFE9d6b1b4240d8650e30F6019)
+    │       │
+    │       └── getContractAddressByName("FtsoV2")
+    │               │
+    │               └── FtsoV2 Contract
+    │                       │
+    │                       └── getFeedById(feedId)
+    │                               │
+    │                               └── Returns: (price, decimals, timestamp)
+    │
+    └── ClawlyPriceMarket
+            │
+            └── resolve() reads FTSO price directly
+                    │
+                    └── Determines outcome: price >= target?
+```
+
+### Feed ID Format
+
+```
+Feed ID = 0x01 + "SYMBOL/USD" (hex-encoded, padded to 21 bytes)
+
+Examples:
+  ETH/USD → 0x014554482f55534400000000000000000000000000
+  BTC/USD → 0x014254432f55534400000000000000000000000000
+  FLR/USD → 0x01464c522f55534400000000000000000000000000
+```
+
+---
+
 ## License
 
 MIT

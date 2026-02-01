@@ -17,7 +17,8 @@ interface Prediction {
   marketId: string;
   pYes: number;
   createdAt: string;
-  agentName?: string;
+  agent: string;
+  txHash?: string;
 }
 
 export default function LeaderboardPage() {
@@ -119,19 +120,33 @@ export default function LeaderboardPage() {
                   predictions.slice(0, 20).map((pred) => (
                     <div 
                       key={pred.id}
-                      className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 flex justify-between items-center"
+                      className="bg-gray-800/50 border border-gray-700 rounded-lg p-4"
                     >
-                      <div>
-                        <p className="text-sm text-gray-400">{pred.marketId}</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {new Date(pred.createdAt).toLocaleString()}
-                        </p>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-xs text-purple-400 font-mono">
+                            {pred.agent ? `${pred.agent.slice(0, 6)}...${pred.agent.slice(-4)}` : 'Unknown'}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {new Date(pred.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <span className={`text-lg font-bold ${pred.pYes >= 50 ? 'text-green-400' : 'text-red-400'}`}>
+                            {pred.pYes}% YES
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <span className={`text-lg font-bold ${pred.pYes >= 0.5 ? 'text-green-400' : 'text-red-400'}`}>
-                          {(pred.pYes * 100).toFixed(0)}% YES
-                        </span>
-                      </div>
+                      {pred.txHash && (
+                        <a 
+                          href={`https://flarescan.com/tx/${pred.txHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-400 hover:underline mt-2 block"
+                        >
+                          View tx ↗
+                        </a>
+                      )}
                     </div>
                   ))
                 ) : (
