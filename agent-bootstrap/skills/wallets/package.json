@@ -1,0 +1,12 @@
+{
+  "name": "wallets",
+  "version": "1.0.0",
+  "description": "Multi-chain wallet management - balance, send, receive",
+  "type": "module",
+  "main": "scripts/wallets.js",
+  "bin": {
+    "wallets": "scripts/wallets.js"
+  },
+  "keywords": ["wallet", "flare", "base", "solana", "evm", "crypto"],
+  "license": "MIT"
+}
